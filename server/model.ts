@@ -1,25 +1,35 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // data model for cards and game state
 
-export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
-export const SUITS = ["♦️", "♥️", "♣️", "♠️"]
+export const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+export const SUITS = ["bamboo", "character", "dot"]
 
 export type CardId = string
-export type LocationType = "unused" | "last-card-played" | "player-hand"
+
+// unused: not seen so far 
+// last-card-played: the last played card
+// player-hand: unplayed tile
+// player-played: all the card already played by the player 
+// set-aside: form chow/pong/gang
+
+export type LocationType = "unused" | "last-card-played" | "player-hand" | "player-played" | "set-aside"
+
 
 export interface Card {
   id: CardId
+  code: number  // code is a unique number for each card (each rank+suit combination)
   rank: typeof RANKS[number]
   suit: typeof SUITS[number]
   locationType: LocationType
   playerIndex: number | null
-  positionInLocation: number | null
+  // positionInLocation: number | null
 }
 
 export interface Config {
   numberOfDecks: number
   rankLimit: number
 }
+
 
 export function createConfig(numDecks: number, rankLimit: number){
   const conf: Config = {numberOfDecks: numDecks, rankLimit: rankLimit}
@@ -30,13 +40,53 @@ export function createConfig(numDecks: number, rankLimit: number){
  * determines whether one can play a card given the last card played
  */
 export function areCompatible(card: Card, lastCardPlayed: Card) {
-  if (card.rank === 'K' || lastCardPlayed.rank === 'K'){
-    return true
-  }
-  return card.rank === lastCardPlayed.rank || card.suit === lastCardPlayed.suit
+  return true
+  // if (card.rank === 'K' || lastCardPlayed.rank === 'K'){
+  //   return true
+  // }
+  // return card.rank === lastCardPlayed.rank || card.suit === lastCardPlayed.suit
 }
 
-export type GamePhase = "initial-card-dealing" | "play" | "game-over"
+// determine whether a player can chow a card
+export function canChow(cards: Card[], lastCardPlayed: Card){
+  const v = lastCardPlayed.code
+  if (v >= 1 && v < 30) { //bamboo, dot, character
+    // cards contain value + 1, value + 2
+    if (cards.filter(x => x.code === v+1 || x.code === v+2).length >= 2) {
+      return true
+    }
+    // cards contain value + 1, value - 1
+    if (cards.filter(x => x.code === v+1 || x.code === v-1).length >= 2) {
+      return true
+    }
+    // cards contain value - 1, value - 2
+    if (cards.filter(x => x.code === v-1 || x.code === v-2).length >= 2) {
+      return true
+    }
+  }
+  return false
+}
+
+// determine whether a player can pong a card
+export function canPong(cards: Card[], lastCardPlayed: Card){
+  let pong_cards = cards.filter(x => x.code === lastCardPlayed.code)
+  if (pong_cards.length >= 2) {
+    return true
+  }
+  return false 
+}
+
+// determine whether a player can kong a card
+export function canKong(cards: Card[], lastCardPlayed: Card){
+  let pong_cards = cards.filter(x => x.code === lastCardPlayed.code)
+  if (pong_cards.length === 3) {
+    return true
+  }
+  return false 
+}
+
+// ?????
+export type GamePhase = "initial-card-dealing" | "play" | "game-over" 
 
 export interface GameState {
   playerNames: string[]
@@ -44,7 +94,7 @@ export interface GameState {
   currentTurnPlayerIndex: number
   phase: GamePhase
   playCount: number
-  fewerThan2CardsPlayer: number[]
+  // fewerThan2CardsPlayer: number[]
   // config: Config
 }
 
@@ -61,24 +111,24 @@ export function computePlayerCardCounts({ playerNames, cardsById }: GameState) {
   return counts
 }
 
-/**
- * @returns an array of the players who have 2 or fewer cards in hand
- */
- export function computePlayers2FewerCard({ playerNames, cardsById }: GameState) {
-  const counts = playerNames.map(_ => 0)
-  Object.values(cardsById).forEach(({ playerIndex }) => {
-    if (playerIndex != null) {
-      ++counts[playerIndex]
-    }
-  })
-  const fewerPlayers:number[] = []
-  counts.forEach( (count, playerIndex) => {
-    if (count <= 2) {
-      fewerPlayers.push(playerIndex)
-    }
-  })
-  return fewerPlayers
-}
+// /**
+//  * @returns an array of the players who have 2 or fewer cards in hand
+//  */
+//  export function computePlayers2FewerCard({ playerNames, cardsById }: GameState) {
+//   const counts = playerNames.map(_ => 0)
+//   Object.values(cardsById).forEach(({ playerIndex }) => {
+//     if (playerIndex != null) {
+//       ++counts[playerIndex]
+//     }
+//   })
+//   const fewerPlayers:number[] = []
+//   counts.forEach( (count, playerIndex) => {
+//     if (count <= 2) {
+//       fewerPlayers.push(playerIndex)
+//     }
+//   })
+//   return fewerPlayers
+// }
 
 /**
  * finds the last played card
@@ -97,31 +147,96 @@ export function getLastPlayedCard(cardsById: Record<CardId, Card>) {
 /**
  * determines if someone has won the game -- i.e., has no cards left in their hand
  */
- export function determineWinner(state: GameState) {
-  if (state.phase === "initial-card-dealing") {
-    return null
+//  export function determineWinner(state: GameState) {
+//   if (state.phase === "initial-card-dealing") {
+//     return null
+//   }
+  // const playerIndex = computePlayerCardCounts(state).indexOf(0)
+  // return playerIndex === -1 ? null : playerIndex
+// }
+
+/**
+ * determines if a player has won the game -- (Hu), used as a helper in doAction
+ */
+export function determineWin(cards: Card[], extraCard: Card) {
+  // create an array with all cards' codes and add the extraCard to evaluate
+  let curr = cards.map(card => card.code) 
+  curr.push(extraCard.code)
+  
+  // if only 2 cards left, win if they are the same
+  if (curr.length === 2) {
+    return curr[0] === curr[1]
   }
-  const playerIndex = computePlayerCardCounts(state).indexOf(0)
-  return playerIndex === -1 ? null : playerIndex
+
+  // sort the cards (by their code)
+  curr.sort((n1,n2) => n1 - n2)
+
+  // go through every card, determine whether there are pairs
+  for (let i = 0; i < curr.length; ++i) {
+    let copied = [...curr]
+    let pair = curr.filter(x => x === curr[i])
+    
+    // remove 2 same cards, 'AA' pattern, then check whether the rest can form 3 * 3 pattern
+    if (pair.length >= 2) {
+      copied.splice(i, 2);
+
+      i += pair.length
+
+      // recursion to check  whether the rest forms 3 * 3 pattern
+      if (check_3s(copied)) {
+        return true
+      }
+      
+    }
+    return false
+  }
+}
+
+
+export function check_3s(rest: number[]): boolean {
+  // if all 3-pairs are removed, leaving with 0 card, we know it conforms to the 3*3 pattern
+  if (rest.length === 0) {
+    return true
+  }
+
+  let threes = rest.filter(x => x === rest[0])
+  // check if can find three identical ones (similar to pang)
+  if (threes.length === 3) {
+    rest.splice(0, 3)
+    return check_3s(rest)
+  }
+  // check if can find three consecutive ones (similar to chow)
+  else {
+    if (rest.filter(x => x === rest[0]+1 || x === rest[0]+2).length >= 2) {
+      rest.splice(0, 3)
+      return check_3s(rest)
+    }
+  }
+  return false
+  
 }
 
 /**
  * creates an empty GameState in the initial-card-dealing state
  */
- export function createEmptyGame(playerNames: string[], numberOfDecks = 5, rankLimit = Infinity): GameState {
+ export function createEmptyGame(playerNames: string[]): GameState {
   const cardsById: Record<CardId, Card> = {}
   let cardId = 0
 
-  for (let i = 0; i < numberOfDecks; i++) {
-    for (const suit of SUITS) {
-      for (const rank of RANKS.slice(0, rankLimit)) {
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < SUITS.length; j++) {
+      for (let k = 0; k < RANKS.length; k++) {
+
+    // for (const suit of SUITS) {
+      // for (const rank of RANKS.slice(0, rankLimit)) {
         const card: Card = {
-          suit,
-          rank,
+          code: k * 10 + (j + 1), // ex. Bamboo1-9 = 01-09, Dot1-9 = 11-19, Character1-9 = 21-29
+          suit: SUITS[j],
+          rank: RANKS[k],
           id: String(cardId++),
           locationType: "unused",
           playerIndex: null,
-          positionInLocation: null,
+          // positionInLocation: null,
         }
         cardsById[card.id] = card
       }
@@ -139,7 +254,7 @@ export function getLastPlayedCard(cardsById: Record<CardId, Card>) {
     currentTurnPlayerIndex: 0,
     phase: "initial-card-dealing",
     playCount: 0,
-    fewerThan2CardsPlayer: [],
+    // fewerThan2CardsPlayer: [],
     // config: defaultConfig,
   }
 }
@@ -178,12 +293,12 @@ function moveToNextPlayer(state: GameState) {
 
 function moveCardToPlayer({ currentTurnPlayerIndex, cardsById }: GameState, card: Card) {
   // add to end position
-  const currentCardPositions = extractPlayerCards(cardsById, currentTurnPlayerIndex).map(x => x.positionInLocation)
+  // const currentCardPositions = extractPlayerCards(cardsById, currentTurnPlayerIndex).map(x => x.positionInLocation)
 
   // update state
   card.locationType = "player-hand"
   card.playerIndex = currentTurnPlayerIndex
-  card.positionInLocation = Math.max(-1, ...currentCardPositions) + 1
+  // card.positionInLocation = Math.max(-1, ...currentCardPositions) + 1
 }
 
 function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, card: Card) {
@@ -197,7 +312,7 @@ function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, 
   // update state
   card.locationType = "last-card-played"
   card.playerIndex = null
-  card.positionInLocation = null
+  // card.positionInLocation = null
 }
 
 /**
@@ -215,7 +330,36 @@ export function doAction(state: GameState, action: Action): Card[] {
     return []
   }
 
-  if (action.action === "draw-card") {
+  if (action.action === "draw-card" && state.phase === "initial-card-dealing") {
+    for(let i = 0; i < 13; ++i){
+      const cardId = findNextCardToDraw(state.cardsById)
+      if (cardId == null) {
+        return []
+      }
+      const card = state.cardsById[cardId]
+      moveCardToPlayer(state, card)
+      changedCards.push(card)
+    }
+    if(state.currentTurnPlayerIndex === 0){ //by default player 0 is the dealer
+      const cardId = findNextCardToDraw(state.cardsById)
+      if (cardId == null) {
+        return []
+      }
+      const card = state.cardsById[cardId]
+      moveCardToPlayer(state, card)
+      changedCards.push(card)
+      if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
+        state.phase = "game-over"
+      }
+    }
+    moveToNextPlayer(state)
+    const counts = computePlayerCardCounts(state)
+    if (counts.every((element)=>{return element >= 13})){
+      state.phase = "play"
+    }
+  }
+  
+  else if (action.action === "draw-card" && state.phase === "play") {
     const cardId = findNextCardToDraw(state.cardsById)
     if (cardId == null) {
       return []
@@ -223,28 +367,13 @@ export function doAction(state: GameState, action: Action): Card[] {
     const card = state.cardsById[cardId]
     moveCardToPlayer(state, card)
     changedCards.push(card)
+    
+    // if player zimo
+    if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
+      state.phase = "game-over"
+    }
   }
-
-  if (state.phase === "initial-card-dealing") {
-    if (action.action !== "draw-card") {
-      return []
-    }
-
-    const counts = computePlayerCardCounts(state)
-    if (Math.max(...counts) === Math.min(...counts) && counts[0] === 3) {
-      // we are done drawing player cards
-      // draw one card to be the last card played
-      const cardId = findNextCardToDraw(state.cardsById)
-      if (cardId == null) {
-        return []
-      }
-      const card = state.cardsById[cardId]
-      moveCardToLastPlayed(state, card)
-      changedCards.push(card)
-      state.phase = "play"
-    }
-    moveToNextPlayer(state)
-  } else if (action.action === "play-card") {
+  else if (state.phase === "play" && action.action === "play-card") {
     const card = state.cardsById[action.cardId]
     if (card.playerIndex !== state.currentTurnPlayerIndex) {
       // not your card
@@ -254,25 +383,27 @@ export function doAction(state: GameState, action: Action): Card[] {
     if (lastPlayedCard == null) {
       return []
     }
-    if (!areCompatible(lastPlayedCard, card)) {
-      return []
-    }
+    // if (!areCompatible(lastPlayedCard, card)) {
+    //   return []
+    // }
     changedCards.push(lastPlayedCard)
     moveCardToLastPlayed(state, card)
     changedCards.push(card)
+
+  
   }
 
   if (state.phase === "play" && action.action !== "draw-card") {
     moveToNextPlayer(state)
   }
 
-  if (state.phase === "play"){
-    state.fewerThan2CardsPlayer = computePlayers2FewerCard(state)
-  }
+  // if (state.phase === "play"){
+  //   state.fewerThan2CardsPlayer = computePlayers2FewerCard(state)
+  // }
 
-  if (determineWinner(state) != null) {
-    state.phase = "game-over"
-  }
+  // if (determineWinner(state) != null) {
+  //   state.phase = "game-over"
+  // }
 
   ++state.playCount
 

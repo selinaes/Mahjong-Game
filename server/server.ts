@@ -6,7 +6,7 @@ const server = http.createServer()
 const io = new Server(server)
 const port = 8091
 
-let gameState = createEmptyGame(["player1", "player2"], 13, 13)
+let gameState = createEmptyGame(["player1", "player2", "player3", "player4"])
 let currentConfig = createConfig(2,2)
 
 function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
@@ -30,7 +30,7 @@ io.on('connection', client => {
       gameState.currentTurnPlayerIndex,
       gameState.phase,
       gameState.playCount,
-      gameState.fewerThan2CardsPlayer
+      // gameState.fewerThan2CardsPlayer
     )
   }
   
@@ -98,12 +98,12 @@ io.on('connection', client => {
       gameState.currentTurnPlayerIndex,
       gameState.phase,
       gameState.playCount,
-      gameState.fewerThan2CardsPlayer,
+      // gameState.fewerThan2CardsPlayer,
     )
   })
 
   client.on("new-game", () => {
-    gameState = createEmptyGame(gameState.playerNames, currentConfig.numberOfDecks, currentConfig.rankLimit)
+    gameState = createEmptyGame(gameState.playerNames)
     const updatedCards = Object.values(gameState.cardsById)
     emitUpdatedCardsForPlayers(updatedCards, true)
     io.to("all").emit(
