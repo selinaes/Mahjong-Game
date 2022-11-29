@@ -20,7 +20,7 @@
     <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
       <!-- <pre>{{ formatCard(card, true) }}</pre> -->
     </div>
-    <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!myTurn">Draw Card</b-button>
+    <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
   </div>
 </template>
 
@@ -53,7 +53,7 @@ const playCount = ref(-1)
 const list2FewerCardsPlayers: Ref<number[]> = ref([])
 
 
-const myTurn = computed(() => currentTurnPlayerIndex.value === playerIndex && phase.value !== "game-over")
+const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value !== "game-over"))
 
 socket.on("all-cards", (allCards: Card[]) => {
   cards.value = allCards
@@ -85,22 +85,39 @@ function getLastPlayedCard(cards: Card[]) {
 }
 
 function isLegal(card: Card, cards: Card[]){
-  if (currentTurnPlayerIndex.value !== playerIndex || phase.value === "game-over") {
-      // not your turn or game finished
-      return false
+  // if (currentTurnPlayerIndex.value !== playerIndex || phase.value === "game-over") {
+  //     // not your turn or game finished
+  //     return false
+  // }
+  // const lastPlayedCard = getLastPlayedCard(cards)
+  //   if (lastPlayedCard === null) {
+  //     return false
+  //   }
+  //   if (!areCompatible(card, lastPlayedCard)) {
+  //     return false
+  //   }
+  //   if (card.locationType !== 'player-hand'){
+  //     return false
+  //   }
+  if (currentTurnPlayerIndex.value !== playerIndex || phase.value !== "play" || card.locationType !== 'player-hand') {
+    return false
   }
-  const lastPlayedCard = getLastPlayedCard(cards)
-    if (lastPlayedCard === null) {
-      return false
-    }
-    if (!areCompatible(card, lastPlayedCard)) {
-      return false
-    }
-    if (card.locationType !== 'player-hand'){
-      return false
-    }
   return true
 }
+
+// the button for draw is clickable
+const canDraw = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value === "initial-card-dealing" || phase.value === "draw"))
+
+
+// function canDraw(){
+//   if (phase.value === "initial-card-dealing" && myTurn) {
+//     return true
+//   }
+//   if (!myTurn || phase.value !== "draw"){
+//     return false
+//   }
+//   return true
+// }
 
 async function drawCard() {
   if (typeof playerIndex === "number") {

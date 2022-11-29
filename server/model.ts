@@ -86,7 +86,7 @@ export function canKong(cards: Card[], lastCardPlayed: Card){
 }
 
 // ?????
-export type GamePhase = "initial-card-dealing" | "play" | "game-over" 
+export type GamePhase = "initial-card-dealing" | "draw" | "play" | "game-over" 
 
 export interface GameState {
   playerNames: string[]
@@ -305,7 +305,7 @@ function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, 
   // change current last-card-played to unused
   Object.values(cardsById).forEach(c => {
     if (c.locationType === "last-card-played") {
-      c.locationType = "unused"
+      c.locationType = "player-played"
     }
   })
 
@@ -330,7 +330,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     return []
   }
 
-  if (action.action === "draw-card" && state.phase === "initial-card-dealing") {
+  if (state.phase === "initial-card-dealing" && action.action === "draw-card") {
     for(let i = 0; i < 13; ++i){
       const cardId = findNextCardToDraw(state.cardsById)
       if (cardId == null) {
@@ -351,6 +351,7 @@ export function doAction(state: GameState, action: Action): Card[] {
       if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
         state.phase = "game-over"
       }
+      
     }
     moveToNextPlayer(state)
     const counts = computePlayerCardCounts(state)
@@ -359,7 +360,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     }
   }
   
-  else if (action.action === "draw-card" && state.phase === "play") {
+  else if (state.phase === "draw" && action.action === "draw-card") {
     const cardId = findNextCardToDraw(state.cardsById)
     if (cardId == null) {
       return []
@@ -372,6 +373,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
       state.phase = "game-over"
     }
+    state.phase = "play"
   }
   else if (state.phase === "play" && action.action === "play-card") {
     const card = state.cardsById[action.cardId]
@@ -380,22 +382,25 @@ export function doAction(state: GameState, action: Action): Card[] {
       return []
     }
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    if (lastPlayedCard == null) {
-      return []
-    }
+    // if (lastPlayedCard == null) {
+    //   return []
+    // }
     // if (!areCompatible(lastPlayedCard, card)) {
     //   return []
     // }
-    changedCards.push(lastPlayedCard)
+    // if this is the first play (no "last-played-card" exist)
+    if (lastPlayedCard){
+      changedCards.push(lastPlayedCard)
+    }
     moveCardToLastPlayed(state, card)
     changedCards.push(card)
-
-  
-  }
-
-  if (state.phase === "play" && action.action !== "draw-card") {
+    state.phase = "draw"
     moveToNextPlayer(state)
   }
+
+  // if (state.phase === "play" && action.action !== "draw-card") {
+  //   moveToNextPlayer(state)
+  // }
 
   // if (state.phase === "play"){
   //   state.fewerThan2CardsPlayer = computePlayers2FewerCard(state)
