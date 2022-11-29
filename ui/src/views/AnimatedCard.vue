@@ -7,7 +7,7 @@
     class="mb-2"
   >
     <b-card-text>
-      [Card-ID: {{card.id}}] {{card.locationType==='player-played'?'(played)':''}} {{legal ? '': 'NOT LEGAL TO PLAY'}}
+      [Card-ID: {{card.id}}] {{card.code}} 
     </b-card-text>
 
     <b-button href="#" 
@@ -54,6 +54,9 @@ function cardColor(type: LocationType){
   }
   if (type === 'player-played'){
     return 'dark'
+  }
+  if (type === 'set-aside') {
+    return 'success'
   }
 }
 </script>

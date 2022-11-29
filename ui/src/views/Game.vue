@@ -21,13 +21,14 @@
       <!-- <pre>{{ formatCard(card, true) }}</pre> -->
     </div>
     <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
+    <b-button class="mx-2 my-2" size="sm" @click="pong" :disabled="!canPong">Pong</b-button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, Ref } from 'vue'
 import { io } from "socket.io-client"
-import { Card, GamePhase, Action, formatCard, CardId, areCompatible, Config } from "../../../server/model"
+import { Card, GamePhase, Action, formatCard, CardId, areCompatible, Config} from "../../../server/model"
 import AnimatedCard from './AnimatedCard.vue';
 
 // props
@@ -51,12 +52,13 @@ const currentTurnPlayerIndex = ref(-1)
 const phase = ref("")
 const playCount = ref(-1)
 const list2FewerCardsPlayers: Ref<number[]> = ref([])
+const canPong = ref(false)
 
 
 const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value !== "game-over"))
 
 socket.on("all-cards", (allCards: Card[]) => {
-  cards.value = allCards
+  cards.value = allCards.sort((a,b)=> {return a.code - b.code})
 })
 
 socket.on("updated-cards", (updatedCards: Card[]) => {
@@ -70,6 +72,10 @@ socket.on("game-state", (newCurrentTurnPlayerIndex: number, newPhase: GamePhase,
   list2FewerCardsPlayers.value = twoFewerPlayes
 })
 
+socket.on("user-can-pong", () => {
+  canPong.value = true
+})
+
 
 function doAction(action: Action) {
   return new Promise<Card[]>((resolve, reject) => {
@@ -81,7 +87,7 @@ function doAction(action: Action) {
 }
 
 function getLastPlayedCard(cards: Card[]) {
-  return cards.find(c => c.locationType === "last-card-played") || null
+  return cards.find(c => c.locationType === "last-card-played")
 }
 
 function isLegal(card: Card, cards: Card[]){
@@ -96,7 +102,7 @@ function isLegal(card: Card, cards: Card[]){
   //   if (!areCompatible(card, lastPlayedCard)) {
   //     return false
   //   }
-  //   if (card.locationType !== 'player-hand'){
+  //   if (card.locationType !== 'player-hand'){ 
   //     return false
   //   }
   if (currentTurnPlayerIndex.value !== playerIndex || phase.value !== "play" || card.locationType !== 'player-hand') {
@@ -108,6 +114,7 @@ function isLegal(card: Card, cards: Card[]){
 // the button for draw is clickable
 const canDraw = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value === "initial-card-dealing" || phase.value === "draw"))
 
+// const canPong = computed(()=>(currentTurnPlayerIndex.value === playerIndex))
 
 // function canDraw(){
 //   if (phase.value === "initial-card-dealing" && myTurn) {
@@ -133,6 +140,17 @@ async function playCard(cardId: CardId) {
     const updatedCards = await doAction({ action: "play-card", playerIndex, cardId })
     if (updatedCards.length === 0) {
       alert("didn't work")
+    }
+  }
+}
+
+async function pong(cardId: CardId){
+  if (typeof playerIndex === "number") {
+    const updatedCards = await doAction({ action: "pong", playerIndex, cardId })
+    if (updatedCards.length === 0) {
+      alert("didn't work")
+    } else { // succeed
+      canPong.value = false
     }
   }
 }

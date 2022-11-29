@@ -71,15 +71,15 @@ export function canChow(cards: Card[], lastCardPlayed: Card){
 export function canPong(cards: Card[], lastCardPlayed: Card){
   let pong_cards = cards.filter(x => x.code === lastCardPlayed.code)
   if (pong_cards.length >= 2) {
-    return true
+    return pong_cards
   }
-  return false 
+  return []
 }
 
 // determine whether a player can kong a card
 export function canKong(cards: Card[], lastCardPlayed: Card){
-  let pong_cards = cards.filter(x => x.code === lastCardPlayed.code)
-  if (pong_cards.length === 3) {
+  let kong_cards = cards.filter(x => x.code === lastCardPlayed.code)
+  if (kong_cards.length === 3) {
     return true
   }
   return false 
@@ -180,16 +180,16 @@ export function determineWin(cards: Card[], extraCard: Card) {
     if (pair.length >= 2) {
       copied.splice(i, 2);
 
-      i += pair.length
+      i += pair.length - 1
 
       // recursion to check  whether the rest forms 3 * 3 pattern
       if (check_3s(copied)) {
         return true
       }
       
-    }
-    return false
+    }    
   }
+  return false
 }
 
 
@@ -230,7 +230,7 @@ export function check_3s(rest: number[]): boolean {
     // for (const suit of SUITS) {
       // for (const rank of RANKS.slice(0, rankLimit)) {
         const card: Card = {
-          code: k * 10 + (j + 1), // ex. Bamboo1-9 = 01-09, Dot1-9 = 11-19, Character1-9 = 21-29
+          code: j * 10 + (k + 1), // ex. Bamboo1-9 = 01-09, Dot1-9 = 11-19, Character1-9 = 21-29
           suit: SUITS[j],
           rank: RANKS[k],
           id: String(cardId++),
@@ -285,10 +285,20 @@ export interface PlayCardAction {
   cardId: CardId
 }
 
-export type Action = DrawCardAction | PlayCardAction
+export interface PongAction {
+  action: "pong"
+  playerIndex: number
+  cardId: CardId
+}
+
+export type Action = DrawCardAction | PlayCardAction | PongAction
 
 function moveToNextPlayer(state: GameState) {
   state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
+}
+
+function moveToSpecificPlayer(state: GameState, playerId: number) {
+  state.currentTurnPlayerIndex = playerId
 }
 
 function moveCardToPlayer({ currentTurnPlayerIndex, cardsById }: GameState, card: Card) {
@@ -315,17 +325,48 @@ function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, 
   // card.positionInLocation = null
 }
 
+// ** playerId is the player index of the pong user 
+function moveCardToSetAside({ cardsById }: GameState, pongcards: Card[], playerId: number){
+  Object.values(cardsById).forEach(c => {
+    if (c.locationType === "last-card-played") {
+      c.locationType = "set-aside"
+      c.playerIndex = playerId
+    }
+  })
+  pongcards.forEach(c => {
+    c.locationType = "set-aside"
+  })
+}
+
+export function getPongUser(state: GameState, action: Action){
+  const lastPlayedCard = getLastPlayedCard(state.cardsById)
+  for(let userId = 0; userId < state.playerNames.length; userId++){
+    console.log("increment i is"+userId)
+    if (lastPlayedCard.playerIndex === userId) {
+      continue
+    }
+    else if (canPong(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
+      console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
+      console.log("model user id: " + userId)
+      return userId
+    }
+  }
+  return -1
+}
+
+
 /**
  * updates the game state based on the given action
  * @returns an array of cards that were updated, or an empty array if the action is disallowed
  */
 export function doAction(state: GameState, action: Action): Card[] {
-  const changedCards: Card[] = []
+  // console.log("action is: "+action.action)
+  let changedCards: Card[] = []
   if (state.phase === "game-over") {
     // game over already
     return []
   }
-  if (action.playerIndex !== state.currentTurnPlayerIndex) {
+  if (action.playerIndex !== state.currentTurnPlayerIndex && action.action!=="pong") {
     // not your turn
     return []
   }
@@ -360,6 +401,23 @@ export function doAction(state: GameState, action: Action): Card[] {
     }
   }
   
+  else if(action.action === "pong"){  // user agreed to pong
+    const lastPlayedCard = getLastPlayedCard(state.cardsById)
+    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+      return []
+    }
+    let pongcards = canPong(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
+    console.log("pongcards: " + pongcards)
+    if (pongcards.length > 0) {
+      moveCardToSetAside(state, pongcards,action.playerIndex)
+      changedCards.push(lastPlayedCard)
+      changedCards = changedCards.concat(pongcards)
+      console.log("changeCards: " + changedCards)
+      moveToSpecificPlayer(state, action.playerIndex)
+      state.phase = "play"
+    }
+  }
+
   else if (state.phase === "draw" && action.action === "draw-card") {
     const cardId = findNextCardToDraw(state.cardsById)
     if (cardId == null) {
@@ -377,7 +435,7 @@ export function doAction(state: GameState, action: Action): Card[] {
   }
   else if (state.phase === "play" && action.action === "play-card") {
     const card = state.cardsById[action.cardId]
-    if (card.playerIndex !== state.currentTurnPlayerIndex) {
+    if (card.playerIndex !== state.currentTurnPlayerIndex || card.locationType !== "player-hand") {
       // not your card
       return []
     }
@@ -440,5 +498,9 @@ export function printState({ playerNames, cardsById, currentTurnPlayerIndex, pha
  * @returns only those cards that the given player has any "business" seeing
  */
 export function filterCardsForPlayerPerspective(cards: Card[], playerIndex: number) {
-  return cards.filter(card => card.playerIndex == null || card.playerIndex === playerIndex)
+  return cards.filter(card => card.playerIndex == null || card.playerIndex === playerIndex).sort((a,b)=> {return a.code - b.code})
+}
+
+export function sortCards(cards: Card[]) {
+  return cards.sort((a,b)=> {return a.code - b.code})
 }
