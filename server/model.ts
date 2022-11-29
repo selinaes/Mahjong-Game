@@ -324,13 +324,11 @@ export interface PlayCardAction {
 export interface PongAction {
   action: "pong"
   playerIndex: number
-  cardId: CardId
 }
 
 export interface KongAction {
   action: "kong"
   playerIndex: number
-  cardId: CardId
 }
 
 
