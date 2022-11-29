@@ -1,5 +1,31 @@
 <template>
   <div>
+    <div>
+        <!-- <b-button id="show-btn" @click="modalShow = !modalShow">Open Pong</b-button> -->
+
+        <b-modal id="bv-modal-example"  v-model="modalShow" hide-footer no-stacking>
+          <template #modal-title>
+            You could Pong/Kong/Chow the following card! 
+          </template>
+          <div class="d-block text-center">
+            <p>{{actionableCard}}</p>
+          </div>
+          <b-button  @click="pong" :disabled="!canPong">Pong</b-button>
+          <b-button  @click="kong" :disabled="!canKong">Kong</b-button>
+          <b-button  v-b-modal.modal-multi-2 :disabled="!canChow">Chow</b-button>
+          <b-button  @click="$bvModal.hide('bv-modal-example')">Pass</b-button>
+        </b-modal>
+
+        <b-modal id="modal-multi-2" title="Chow Choices">
+          <p class="my-2">Select one of the following sets</p>
+          <div
+            v-for="choice in chowChoices"
+          >
+          <b-button  @click="chow(choice)" >{{formatChowSet(choice)}}</b-button>
+          </div>
+        </b-modal>
+      </div>
+
     <b-button class="mx-2 my-2" size="sm" @click="socket.emit('new-game')">New Game</b-button>
     <b-badge class="mr-2 mb-2" :variant="myTurn ? 'primary' : 'secondary'">turn: {{ currentTurnPlayerIndex }}</b-badge>
     <b-badge class="mr-2 mb-2">{{ phase }}</b-badge>
@@ -21,8 +47,8 @@
       <!-- <pre>{{ formatCard(card, true) }}</pre> -->
     </div>
     <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
-    <b-button class="mx-2 my-2" size="sm" @click="pong" :disabled="!canPong">Pong</b-button>
-    <b-button class="mx-2 my-2" size="sm" @click="kong" :disabled="!canKong">Kong</b-button>
+    <!-- <b-button class="mx-2 my-2" size="sm" @click="pong" :disabled="!canPong">Pong</b-button> -->
+    <!-- <b-button class="mx-2 my-2" size="sm" @click="kong" :disabled="!canKong">Kong</b-button> -->
 
   </div>
 </template>
@@ -56,6 +82,11 @@ const playCount = ref(-1)
 const list2FewerCardsPlayers: Ref<number[]> = ref([])
 const canPong = ref(false)
 const canKong = ref(false)
+const canChow = ref(false)
+const modalShow = ref(false)
+const choiceShow = ref(false)
+const actionableCard = ref("")
+const chowChoices: Ref<Card[][]> = ref([])
 
 
 const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value !== "game-over"))
@@ -75,12 +106,37 @@ socket.on("game-state", (newCurrentTurnPlayerIndex: number, newPhase: GamePhase,
   list2FewerCardsPlayers.value = twoFewerPlayes
 })
 
-socket.on("user-can-pong", () => {
+// can kong includes the situation for can-pong. User can select if they want to kong or pong
+socket.on("user-can-kong", (updatedCards: Card[]) => {
+  actionableCard.value = updatedCards[1].rank + updatedCards[1].suit
   canPong.value = true
+  canKong.value = true
+  modalShow.value = true
 })
 
-socket.on("user-can-kong", () => {
-  canKong.value = true
+socket.on("user-can-pong", (updatedCards: Card[]) => {
+  actionableCard.value = updatedCards[1].rank + updatedCards[1].suit
+  canPong.value = true
+  modalShow.value = true
+})
+
+socket.on("user-can-chow", (chowCardSets: Card[][], lastPlayedCard: Card) => {
+  chowCardSets = combineChowSets(chowCardSets, lastPlayedCard)
+  actionableCard.value = chowCardSets.reduce((accu, elem, idx) => {
+    let padding = ""
+    for (let i = 0; i < elem.length-1; i++) {
+      padding += (elem[i].rank + elem[i].suit)
+      padding += " +"
+    }
+    padding += elem[elem.length-1].rank + elem[elem.length-1].suit
+    accu = accu + "set" + (idx+1).toString() + ": " + padding + "\n"
+    
+    return accu
+  },
+  "")
+  chowChoices.value = combineChowSets(chowCardSets, lastPlayedCard)
+  canChow.value = true
+  modalShow.value = true
 })
 
 function doAction(action: Action) {
@@ -90,6 +146,24 @@ function doAction(action: Action) {
       resolve(updatedCards)
     })
   })
+}
+
+function combineChowSets(chowCardSets: Card[][], lastPlayedCard: Card): Card[][] {
+  let result = []
+  for (let cardlist of chowCardSets){
+    cardlist.push(lastPlayedCard)
+    cardlist.sort((a,b)=> {return a.code - b.code})
+    result.push(cardlist)
+  }
+  return result
+
+}
+
+function formatChowSet(chowCardSet: Card[]) {
+  return chowCardSet.reduce((accu, card) => {
+    accu = accu + card.rank + card.suit + "-"
+    return accu
+  }, "")
 }
 
 function getLastPlayedCard(cards: Card[]) {
@@ -150,29 +224,41 @@ async function playCard(cardId: CardId) {
   }
 }
 
-async function pong(cardId: CardId){
+async function pong(){
   if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "pong", playerIndex, cardId })
+    const updatedCards = await doAction({ action: "pong", playerIndex})
     if (updatedCards.length === 0) {
       alert("didn't work")
     } else { // succeed
       canPong.value = false
+      modalShow.value = false
     }
   }
 }
 
-async function kong(cardId: CardId){
+async function kong(){
   if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "kong", playerIndex, cardId })
+    const updatedCards = await doAction({ action: "kong", playerIndex})
     if (updatedCards.length === 0) {
       alert("didn't work")
     } else { // succeed
       canKong.value = false
+      modalShow.value = false
     }
   }
 }
 
-
+async function chow(set: Card[]){
+  if (typeof playerIndex === "number") {
+    const updatedCards = await doAction({ action: "chow", playerIndex, cards: set})
+    if (updatedCards.length === 0) {
+      alert("didn't work")
+    } else { // succeed
+      canChow.value = false
+      modalShow.value = false
+    }
+  }
+}
 
 async function applyUpdatedCards(updatedCards: Card[]) {
   for (const x of updatedCards) {

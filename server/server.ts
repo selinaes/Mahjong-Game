@@ -1,6 +1,6 @@
 import http from "http"
 import { Server } from "socket.io"
-import { Action, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser } from "./model"
+import { Action, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser, canChow, getChowCards } from "./model"
 
 const server = http.createServer()
 const io = new Server(server)
@@ -83,15 +83,18 @@ io.on('connection', client => {
   })
 
   client.on("action", (action: Action) => {
+    let updatedCards: Card[]
     let pongUserId: number = -1
     let kongUserId: number = -1
+    let chowCardSets: Card[][] = []
     if (typeof playerIndex === "number") {
-      const updatedCards = doAction(gameState, { ...action, playerIndex })
+      updatedCards = doAction(gameState, { ...action, playerIndex })
       emitUpdatedCardsForPlayers(updatedCards)
       console.log("update card is: " + updatedCards)
       if (action.action === "play-card"){
-        pongUserId = getPongUser(gameState, {...action, playerIndex})
-        kongUserId = getKongUser(gameState, {...action, playerIndex})
+        pongUserId = getPongUser(gameState)
+        kongUserId = getKongUser(gameState)
+        chowCardSets = getChowCards(gameState)
       }
     } else {
       // no actions allowed from "all"
@@ -101,18 +104,31 @@ io.on('connection', client => {
       "updated-cards", 
       Object.values(gameState.cardsById),    
     )
-    if (pongUserId !== -1) {
-      console.log("user-can-pong, Id"+pongUserId)
-      io.to(pongUserId.toString()).emit(
-        "user-can-pong"
-      )
-    }
     if (kongUserId !== -1) {
       console.log("user-can-kong, Id"+kongUserId)
       io.to(kongUserId.toString()).emit(
-        "user-can-kong"
+        "user-can-kong",
+        updatedCards
       )
     }
+    else if (pongUserId !== -1) {
+      console.log("user-can-pong, Id"+pongUserId)
+      io.to(pongUserId.toString()).emit(
+        "user-can-pong",
+        updatedCards
+      )
+    }
+    if (chowCardSets.length > 0) {
+      console.log("user-can-chow")
+      console.log(JSON.stringify(chowCardSets))
+      io.to(gameState.currentTurnPlayerIndex.toString()).emit(
+        "user-can-chow",
+        chowCardSets,
+        updatedCards[updatedCards.length-1] // should be the newly played card, in a "play-card" action
+      )
+    }
+
+    
     io.emit(
       "game-state", 
       gameState.currentTurnPlayerIndex,

@@ -343,7 +343,7 @@ export interface KongAction {
 export interface ChowAction {
   action: "chow"
   playerIndex: number
-  cardIds: CardId[]
+  cards: Card[]
 }
 
 // export interface ChooseChowAction {
@@ -398,47 +398,42 @@ function moveCardToSetAside({ cardsById }: GameState, pongcards: Card[], playerI
   })
 }
 
-export function getPongUser(state: GameState, action: Action){
+export function getPongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
   for(let userId = 0; userId < state.playerNames.length; userId++){
-    console.log("increment i is"+userId)
+    // console.log("increment i is"+userId)
     if (lastPlayedCard.playerIndex === userId) {
       continue
     }
     else if (canPong(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
-      console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
-      console.log("model user id: " + userId)
+      // console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
+      // console.log("model user id: " + userId)
       return userId
     }
   }
   return -1
 }
 
-export function getKongUser(state: GameState, action: Action){
+export function getKongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
   for(let userId = 0; userId < state.playerNames.length; userId++){
-    console.log("increment i is"+userId)
+    // console.log("increment i is"+userId)
     if (lastPlayedCard.playerIndex === userId) {
       continue
     }
     else if (canKong(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
-      console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
-      console.log("model user id: " + userId)
+      // console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
+      // console.log("model user id: " + userId)
       return userId
     }
   }
   return -1
 }
 
-export function getChowUser(state: GameState, action: Action){
+export function getChowCards(state: GameState):Card[][]{
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
-  let userId = (lastPlayedCard.playerIndex + 1) % 4
-  if (canChow(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
-    console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
-    console.log("model user id: " + userId)
-    return userId
-  }
-  return -1
+  let nextId = (lastPlayedCard.playerIndex + 1) % 4
+  return canChow(extractPlayerCards(state.cardsById,nextId),lastPlayedCard)
 }
 
 /**
@@ -495,7 +490,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     let pongcards = canPong(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
     console.log("pongcards: " + pongcards)
     if (pongcards.length > 0) {
-      moveCardToSetAside(state, pongcards,action.playerIndex)
+      moveCardToSetAside(state, pongcards, action.playerIndex)
       changedCards.push(lastPlayedCard)
       changedCards = changedCards.concat(pongcards)
       console.log("changeCards: " + changedCards)
@@ -512,10 +507,10 @@ export function doAction(state: GameState, action: Action): Card[] {
     let chowcards = canChow(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
     console.log("chowCards: " + chowcards)
     if (chowcards.length > 0) {
-      moveCardToSetAside(state, chowcards ,action.playerIndex)
-      changedCards.push(lastPlayedCard)
-      changedCards = changedCards.concat(chowcards)
-      console.log("changeCards: " + changedCards)
+      moveCardToSetAside(state, action.cards ,action.playerIndex)
+      // changedCards.push(lastPlayedCard)
+      changedCards = changedCards.concat(action.cards)
+      console.log("changeCards: " + action.cards)
       moveToSpecificPlayer(state, action.playerIndex)
       state.phase = "play"
     }
