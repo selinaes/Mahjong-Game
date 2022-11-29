@@ -50,31 +50,28 @@ export function areCompatible(card: Card, lastCardPlayed: Card) {
 // determine whether a player can chow a card
 export function canChow(cards: Card[], lastCardPlayed: Card){
   const v = lastCardPlayed.code
-  let chow_cards: Card[] = []
+  let all_chow_cards = []
   if (v >= 1 && v < 30) { //bamboo, dot, character
-    
-    let chow_card1 = cards.filter(x => x.code === v+1)
-    let chow_card2 = cards.filter(x => x.code === v+2)
-    let chow_card3 = cards.filter(x => x.code === v-1)
-    let chow_card4 = cards.filter(x => x.code === v-2) 
+
+    let chow_card1 = cards.find(x => x.code === v+1)
+    let chow_card2 = cards.find(x => x.code === v+2)
+    let chow_card3 = cards.find(x => x.code === v-1)
+    let chow_card4 = cards.find(x => x.code === v-2) 
 
     // cards contain value + 1, value + 2
-    if (chow_card1.length >= 1 && chow_card2.length >= 1) {
-      chow_cards = chow_cards.concat(chow_card1)
-      chow_cards = chow_cards.concat(chow_card2)
+    if (chow_card1 && chow_card2) {
+      all_chow_cards.push([chow_card1, chow_card2])
     }
     // cards contain value + 1, value - 1
-    if (chow_card1.length >= 1 && chow_card3.length >= 1) {
-      chow_cards = chow_cards.concat(chow_card1)
-      chow_cards = chow_cards.concat(chow_card3)
+    if (chow_card1 && chow_card3) {
+      all_chow_cards.push([chow_card1, chow_card3])
     }
     // cards contain value - 1, value - 2
-    if (chow_card3.length >= 1 && chow_card4.length >= 1) {
-      chow_cards = chow_cards.concat(chow_card3)
-      chow_cards = chow_cards.concat(chow_card4)
+    if (chow_card3 && chow_card4) {
+      all_chow_cards.push([chow_card3, chow_card4])
     }
   }
-  return chow_cards
+  return all_chow_cards
 }
 
 // determine whether a player can pong a card
@@ -349,6 +346,11 @@ export interface ChowAction {
   cardIds: CardId[]
 }
 
+// export interface ChooseChowAction {
+//   action: "choose-chow"
+//   playerIndex: number
+// }
+
 export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction | ChowAction
 
 function moveToNextPlayer(state: GameState) {
@@ -504,7 +506,7 @@ export function doAction(state: GameState, action: Action): Card[] {
 
   else if(action.action === "chow"){  // user agreed to pong
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+    if(action.playerIndex !== state.currentTurnPlayerIndex) { // if not xiajia chow
       return []
     }
     let chowcards = canChow(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
