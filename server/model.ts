@@ -50,28 +50,40 @@ export function areCompatible(card: Card, lastCardPlayed: Card) {
 // determine whether a player can chow a card
 export function canChow(cards: Card[], lastCardPlayed: Card){
   const v = lastCardPlayed.code
+  let chow_cards: Card[] = []
   if (v >= 1 && v < 30) { //bamboo, dot, character
+    
+    let chow_card1 = cards.filter(x => x.code === v+1)
+    let chow_card2 = cards.filter(x => x.code === v+2)
+    let chow_card3 = cards.filter(x => x.code === v-1)
+    let chow_card4 = cards.filter(x => x.code === v-2) 
+
     // cards contain value + 1, value + 2
-    if (cards.filter(x => x.code === v+1 || x.code === v+2).length >= 2) {
-      return true
+    if (chow_card1.length >= 1 && chow_card2.length >= 1) {
+      chow_cards = chow_cards.concat(chow_card1)
+      chow_cards = chow_cards.concat(chow_card2)
     }
     // cards contain value + 1, value - 1
-    if (cards.filter(x => x.code === v+1 || x.code === v-1).length >= 2) {
-      return true
+    if (chow_card1.length >= 1 && chow_card3.length >= 1) {
+      chow_cards = chow_cards.concat(chow_card1)
+      chow_cards = chow_cards.concat(chow_card3)
     }
     // cards contain value - 1, value - 2
-    if (cards.filter(x => x.code === v-1 || x.code === v-2).length >= 2) {
-      return true
+    if (chow_card3.length >= 1 && chow_card4.length >= 1) {
+      chow_cards = chow_cards.concat(chow_card3)
+      chow_cards = chow_cards.concat(chow_card4)
     }
   }
-  return false
+  return chow_cards
 }
 
 // determine whether a player can pong a card
 export function canPong(cards: Card[], lastCardPlayed: Card){
   let pong_cards = cards.filter(x => x.code === lastCardPlayed.code)
   if (pong_cards.length >= 2) {
-    return pong_cards
+    let two_pong_cards = []
+    two_pong_cards.push(pong_cards[0],pong_cards[1])
+    return two_pong_cards
   }
   return []
 }
@@ -331,8 +343,13 @@ export interface KongAction {
   playerIndex: number
 }
 
+export interface ChowAction {
+  action: "chow"
+  playerIndex: number
+  cardIds: CardId[]
+}
 
-export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction
+export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction | ChowAction
 
 function moveToNextPlayer(state: GameState) {
   state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
@@ -411,6 +428,17 @@ export function getKongUser(state: GameState, action: Action){
   return -1
 }
 
+export function getChowUser(state: GameState, action: Action){
+  const lastPlayedCard = getLastPlayedCard(state.cardsById)
+  let userId = (lastPlayedCard.playerIndex + 1) % 4
+  if (canChow(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
+    console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
+    console.log("model user id: " + userId)
+    return userId
+  }
+  return -1
+}
+
 /**
  * updates the game state based on the given action
  * @returns an array of cards that were updated, or an empty array if the action is disallowed
@@ -474,6 +502,23 @@ export function doAction(state: GameState, action: Action): Card[] {
     }
   }
 
+  else if(action.action === "chow"){  // user agreed to pong
+    const lastPlayedCard = getLastPlayedCard(state.cardsById)
+    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+      return []
+    }
+    let chowcards = canChow(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
+    console.log("chowCards: " + chowcards)
+    if (chowcards.length > 0) {
+      moveCardToSetAside(state, chowcards ,action.playerIndex)
+      changedCards.push(lastPlayedCard)
+      changedCards = changedCards.concat(chowcards)
+      console.log("changeCards: " + changedCards)
+      moveToSpecificPlayer(state, action.playerIndex)
+      state.phase = "play"
+    }
+  }
+  
   else if (action.action === "kong") {
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
     if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
