@@ -1,6 +1,6 @@
 import http from "http"
 import { Server } from "socket.io"
-import { Action, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser } from "./model"
+import { Action, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser } from "./model"
 
 const server = http.createServer()
 const io = new Server(server)
@@ -83,13 +83,15 @@ io.on('connection', client => {
   })
 
   client.on("action", (action: Action) => {
-    let pongUserId: number = -1;
+    let pongUserId: number = -1
+    let kongUserId: number = -1
     if (typeof playerIndex === "number") {
       const updatedCards = doAction(gameState, { ...action, playerIndex })
       emitUpdatedCardsForPlayers(updatedCards)
       console.log("update card is: " + updatedCards)
       if (action.action === "play-card"){
         pongUserId = getPongUser(gameState, {...action, playerIndex})
+        kongUserId = getKongUser(gameState, {...action, playerIndex})
       }
     } else {
       // no actions allowed from "all"
@@ -103,6 +105,12 @@ io.on('connection', client => {
       console.log("user-can-pong, Id"+pongUserId)
       io.to(pongUserId.toString()).emit(
         "user-can-pong"
+      )
+    }
+    if (kongUserId !== -1) {
+      console.log("user-can-kong, Id"+kongUserId)
+      io.to(kongUserId.toString()).emit(
+        "user-can-kong"
       )
     }
     io.emit(

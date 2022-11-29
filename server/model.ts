@@ -76,13 +76,48 @@ export function canPong(cards: Card[], lastCardPlayed: Card){
   return []
 }
 
+// check if user can form a kong by himself
+export function checkSelfKong(cards: Card[]): Card[][] {
+  if (cards.length <= 3) {
+    return []
+  }
+  // use two pointer to reduce time complexity
+  let kong_cards: Card[][] = []
+  cards.sort((a,b)=> {return a.code - b.code})
+  let i = 0
+  let j = 1
+  while (j < cards.length) {
+    if (cards[j].code === cards[i].code) {
+      j += 1
+      // find four indentical tiles
+      if ((j - i) === 4) {
+        // push them to one temp kong_card
+        let kong_card:Card[] = []
+        while (i < j) {
+          kong_card.push(cards[i])
+          i += 1
+        }
+        kong_cards.push(kong_card)
+      }
+      
+    }
+    else {      
+      i = j
+      j += 1
+    }
+  }
+  return kong_cards
+  
+}
+
+
 // determine whether a player can kong a card
 export function canKong(cards: Card[], lastCardPlayed: Card){
   let kong_cards = cards.filter(x => x.code === lastCardPlayed.code)
   if (kong_cards.length === 3) {
-    return true
+    return kong_cards
   }
-  return false 
+  return [] 
 }
 
 // ?????
@@ -268,6 +303,7 @@ export function findNextCardToDraw(cardsById: Record<CardId, Card>): CardId | nu
   if (unplayedCardIds.length === 0) {
     return null
   }
+  // return unplayedCardIds[0]
   return unplayedCardIds[Math.floor(Math.random() * unplayedCardIds.length)]
 }
 
@@ -291,7 +327,14 @@ export interface PongAction {
   cardId: CardId
 }
 
-export type Action = DrawCardAction | PlayCardAction | PongAction
+export interface KongAction {
+  action: "kong"
+  playerIndex: number
+  cardId: CardId
+}
+
+
+export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction
 
 function moveToNextPlayer(state: GameState) {
   state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
@@ -354,6 +397,21 @@ export function getPongUser(state: GameState, action: Action){
   return -1
 }
 
+export function getKongUser(state: GameState, action: Action){
+  const lastPlayedCard = getLastPlayedCard(state.cardsById)
+  for(let userId = 0; userId < state.playerNames.length; userId++){
+    console.log("increment i is"+userId)
+    if (lastPlayedCard.playerIndex === userId) {
+      continue
+    }
+    else if (canKong(extractPlayerCards(state.cardsById,userId),lastPlayedCard).length !== 0) {
+      console.log("currentPlayeridx: " + lastPlayedCard.playerIndex)
+      console.log("model user id: " + userId)
+      return userId
+    }
+  }
+  return -1
+}
 
 /**
  * updates the game state based on the given action
@@ -366,7 +424,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     // game over already
     return []
   }
-  if (action.playerIndex !== state.currentTurnPlayerIndex && action.action!=="pong") {
+  if (action.playerIndex !== state.currentTurnPlayerIndex && action.action !== "pong" && action.action !== "kong") {
     // not your turn
     return []
   }
@@ -416,6 +474,24 @@ export function doAction(state: GameState, action: Action): Card[] {
       moveToSpecificPlayer(state, action.playerIndex)
       state.phase = "play"
     }
+  }
+
+  else if (action.action === "kong") {
+    const lastPlayedCard = getLastPlayedCard(state.cardsById)
+    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+      return []
+    }
+    let kongcards = canKong(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
+    console.log("pongcards: " + kongcards)
+    if (kongcards.length > 0) {
+      moveCardToSetAside(state, kongcards,action.playerIndex)
+      changedCards.push(lastPlayedCard)
+      changedCards = changedCards.concat(kongcards)
+      console.log("changeCards: " + changedCards)
+      moveToSpecificPlayer(state, action.playerIndex)
+      state.phase = "draw"
+    }
+
   }
 
   else if (state.phase === "draw" && action.action === "draw-card") {

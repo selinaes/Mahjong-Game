@@ -22,6 +22,8 @@
     </div>
     <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
     <b-button class="mx-2 my-2" size="sm" @click="pong" :disabled="!canPong">Pong</b-button>
+    <b-button class="mx-2 my-2" size="sm" @click="kong" :disabled="!canKong">Kong</b-button>
+
   </div>
 </template>
 
@@ -53,6 +55,7 @@ const phase = ref("")
 const playCount = ref(-1)
 const list2FewerCardsPlayers: Ref<number[]> = ref([])
 const canPong = ref(false)
+const canKong = ref(false)
 
 
 const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value !== "game-over"))
@@ -76,6 +79,9 @@ socket.on("user-can-pong", () => {
   canPong.value = true
 })
 
+socket.on("user-can-kong", () => {
+  canKong.value = true
+})
 
 function doAction(action: Action) {
   return new Promise<Card[]>((resolve, reject) => {
@@ -154,6 +160,19 @@ async function pong(cardId: CardId){
     }
   }
 }
+
+async function kong(cardId: CardId){
+  if (typeof playerIndex === "number") {
+    const updatedCards = await doAction({ action: "kong", playerIndex, cardId })
+    if (updatedCards.length === 0) {
+      alert("didn't work")
+    } else { // succeed
+      canKong.value = false
+    }
+  }
+}
+
+
 
 async function applyUpdatedCards(updatedCards: Card[]) {
   for (const x of updatedCards) {
