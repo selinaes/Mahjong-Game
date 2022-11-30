@@ -18,22 +18,22 @@ const router = new VueRouter({
   mode: "history",
   routes: [
     {
-      path:"/rule",
-      component: Rule
-    },
-    {
-      path: "/config",
-      component: Config
-    },
-    {
-      path: "/:playerIndex",
+      path: "/",
       component: Game,
-      props (route) {
-        return {
-          playerIndex: route.params.playerIndex
-        }
-      }
-    }
+      // props (route) {
+      //   return {
+      //     playerIndex: route.params.playerIndex
+      //   }
+      // }
+    },
+    // {
+    //   path:"/rule",
+    //   component: Rule
+    // },
+    // {
+    //   path: "/config",
+    //   component: Config
+    // },
     
   ],
 })

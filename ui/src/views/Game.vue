@@ -59,21 +59,23 @@ import { io } from "socket.io-client"
 import { Card, GamePhase, Action, formatCard, CardId, areCompatible, Config} from "../../../server/model"
 import AnimatedCard from './AnimatedCard.vue';
 
-// props
-interface Props {
-  playerIndex?: string
-}
+// // props
+// interface Props {
+//   playerIndex?: string
+// }
 
-// default values for props
-const props = withDefaults(defineProps<Props>(), {
-  playerIndex: "all",
-})
+// // default values for props
+// const props = withDefaults(defineProps<Props>(), {
+//   playerIndex: "all",
+// })
 
 const socket = io()
-let x = props.playerIndex
-let playerIndex: number | "all" = parseInt(x) >= 0 ? parseInt(x) : "all"
-console.log("playerIndex", JSON.stringify(playerIndex))
-socket.emit("player-index", playerIndex)
+// let x = props.playerIndex
+// let playerIndex: number | "all" = parseInt(x) >= 0 ? parseInt(x) : "all"
+const playerIndex: Ref<number | "all"> = ref("all")
+
+// console.log("playerIndex", JSON.stringify(playerIndex))
+// socket.emit("player-index", playerIndex)
 
 const cards: Ref<Card[]> = ref([])
 const currentTurnPlayerIndex = ref(-1)
@@ -89,7 +91,7 @@ const actionableCard = ref("")
 const chowChoices: Ref<Card[][]> = ref([])
 
 
-const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value !== "game-over"))
+const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex.value) && (phase.value !== "game-over"))
 
 socket.on("all-cards", (allCards: Card[]) => {
   cards.value = allCards.sort((a,b)=> {return a.code - b.code})
@@ -99,11 +101,13 @@ socket.on("updated-cards", (updatedCards: Card[]) => {
   applyUpdatedCards(updatedCards)
 })
 
-socket.on("game-state", (newCurrentTurnPlayerIndex: number, newPhase: GamePhase, newPlayCount: number, twoFewerPlayes: number[]) => {
+socket.on("game-state", (newPlayerIndex: number, newCurrentTurnPlayerIndex: number, newPhase: GamePhase, newPlayCount: number) => {
+  if (newPlayerIndex != null) {
+    playerIndex.value = newPlayerIndex
+  }
   currentTurnPlayerIndex.value = newCurrentTurnPlayerIndex
   phase.value = newPhase
   playCount.value = newPlayCount
-  list2FewerCardsPlayers.value = twoFewerPlayes
 })
 
 // can kong includes the situation for can-pong. User can select if they want to kong or pong
@@ -185,14 +189,14 @@ function isLegal(card: Card, cards: Card[]){
   //   if (card.locationType !== 'player-hand'){ 
   //     return false
   //   }
-  if (currentTurnPlayerIndex.value !== playerIndex || phase.value !== "play" || card.locationType !== 'player-hand') {
+  if (currentTurnPlayerIndex.value !== playerIndex.value || phase.value !== "play" || card.locationType !== 'player-hand') {
     return false
   }
   return true
 }
 
 // the button for draw is clickable
-const canDraw = computed(() => (currentTurnPlayerIndex.value === playerIndex) && (phase.value === "initial-card-dealing" || phase.value === "draw"))
+const canDraw = computed(() => (currentTurnPlayerIndex.value === playerIndex.value) && (phase.value === "initial-card-dealing" || phase.value === "draw"))
 
 // const canPong = computed(()=>(currentTurnPlayerIndex.value === playerIndex))
 
@@ -207,8 +211,8 @@ const canDraw = computed(() => (currentTurnPlayerIndex.value === playerIndex) &&
 // }
 
 async function drawCard() {
-  if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "draw-card", playerIndex })
+  if (typeof playerIndex.value === "number") {
+    const updatedCards = await doAction({ action: "draw-card", playerIndex: playerIndex.value })
     if (updatedCards.length === 0) {
       alert("didn't work")
     }
@@ -216,8 +220,8 @@ async function drawCard() {
 }
 
 async function playCard(cardId: CardId) {
-  if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "play-card", playerIndex, cardId })
+  if (typeof playerIndex.value === "number") {
+    const updatedCards = await doAction({ action: "play-card", playerIndex: playerIndex.value, cardId })
     if (updatedCards.length === 0) {
       alert("didn't work")
     }
@@ -225,8 +229,8 @@ async function playCard(cardId: CardId) {
 }
 
 async function pong(){
-  if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "pong", playerIndex})
+  if (typeof playerIndex.value === "number") {
+    const updatedCards = await doAction({ action: "pong", playerIndex: playerIndex.value})
     if (updatedCards.length === 0) {
       alert("didn't work")
     } else { // succeed
@@ -237,8 +241,8 @@ async function pong(){
 }
 
 async function kong(){
-  if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "kong", playerIndex})
+  if (typeof playerIndex.value === "number") {
+    const updatedCards = await doAction({ action: "kong", playerIndex: playerIndex.value})
     if (updatedCards.length === 0) {
       alert("didn't work")
     } else { // succeed
@@ -249,8 +253,8 @@ async function kong(){
 }
 
 async function chow(set: Card[]){
-  if (typeof playerIndex === "number") {
-    const updatedCards = await doAction({ action: "chow", playerIndex, cards: set})
+  if (typeof playerIndex.value === "number") {
+    const updatedCards = await doAction({ action: "chow", playerIndex: playerIndex.value, cards: set})
     if (updatedCards.length === 0) {
       alert("didn't work")
     } else { // succeed
