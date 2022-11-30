@@ -18,11 +18,14 @@ export default defineConfig({
 	],
 
 	server: {
-		port: 8090,
+		port: 8080,
 		proxy: {
 			"^/socket.io": {
-				target: "http://localhost:8091",
+				target: "http://localhost:8095",
         ws: true
+			},
+      "^/api": {
+				target: "http://localhost:8095",
 			},
     }
 	},
