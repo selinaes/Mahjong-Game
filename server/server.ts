@@ -6,8 +6,8 @@ const server = http.createServer()
 const io = new Server(server)
 const port = 8091
 
-let gameState = createEmptyGame(["player1", "player2", "player3", "player4"])
-let currentConfig = createConfig(2,2)
+let currentConfig = createConfig(0,0,0,0)
+let gameState = createEmptyGame(["a", "b", "c", "d"],currentConfig)
 
 function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
   gameState.playerNames.forEach((_, i) => {
@@ -62,7 +62,7 @@ io.on('connection', client => {
   })
 
   client.on("update-config", (config: Config) => {
-    if (typeof config.numberOfDecks !== "number" || typeof config.rankLimit !== "number" || Object.keys(config).length !== 2) {
+    if (typeof config.dealer !== "number" || typeof config.order !== "number" || typeof config.dragonwind !== "number" || typeof config.bonus !== "number" || Object.keys(config).length !== 4) {
       setTimeout( () => {
         io.emit(
           "update-config-reply",
@@ -139,7 +139,7 @@ io.on('connection', client => {
   })
 
   client.on("new-game", () => {
-    gameState = createEmptyGame(gameState.playerNames)
+    gameState = createEmptyGame(gameState.playerNames, currentConfig)
     const updatedCards = Object.values(gameState.cardsById)
     emitUpdatedCardsForPlayers(updatedCards, true)
     io.to("all").emit(
