@@ -23,6 +23,20 @@ function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
   })
 }
 
+function emitUpdatedCardsForSpecialOps(cards: Card[]) {
+  let lastplayed = cards[0]
+  cards.splice(0, 1)
+  gameState.playerNames.forEach( (_, i) => {
+    let updatedCardsFromPlayerPerspective = filterCardsForPlayerPerspective(cards, i)
+    updatedCardsFromPlayerPerspective.push(lastplayed)
+    console.log("emitting update for player", i, ":", updatedCardsFromPlayerPerspective)
+    io.to(String(i)).emit(
+      "updated-cards", 
+      updatedCardsFromPlayerPerspective,
+    )
+  })
+}
+
 io.on('connection', client => {
   function emitGameState() {
     client.emit(
@@ -89,12 +103,18 @@ io.on('connection', client => {
     let chowCardSets: Card[][] = []
     if (typeof playerIndex === "number") {
       updatedCards = doAction(gameState, { ...action, playerIndex })
-      emitUpdatedCardsForPlayers(updatedCards)
-      console.log("update card is: " + updatedCards)
+      if (action.action === "chow" || action.action === "kong" || action.action === "pong") {
+        emitUpdatedCardsForSpecialOps(updatedCards)
+        updatedCards.splice(0,0) // remove the special 1st place repeated last-played-card
+      } else {
+        emitUpdatedCardsForPlayers(updatedCards)
+      }
+      console.log("update card is: " + JSON.stringify(updatedCards))
       if (action.action === "play-card"){
         pongUserId = getPongUser(gameState)
         kongUserId = getKongUser(gameState)
         chowCardSets = getChowCards(gameState)
+        console.log(`this play, pong ${pongUserId}, kong ${kongUserId}, chow ${chowCardSets.length} `)
       }
     } else {
       // no actions allowed from "all"

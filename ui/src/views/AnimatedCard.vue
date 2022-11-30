@@ -7,7 +7,7 @@
     class="mb-2"
   >
     <b-card-text>
-      [Card-ID: {{card.id}}] {{card.code}} 
+      [Card-ID: {{card.id}}] {{card.code}} {{card.locationType}}
     </b-card-text>
 
     <b-button href="#" 
