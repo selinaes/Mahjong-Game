@@ -18,6 +18,14 @@ const router = new VueRouter({
   mode: "history",
   routes: [
     {
+      path:"/rule",
+      component: Rule
+    },
+    {
+      path: "/config",
+      component: Config
+    },
+    {
       path: "/",
       component: Game,
       // props (route) {
@@ -26,14 +34,7 @@ const router = new VueRouter({
       //   }
       // }
     },
-    // {
-    //   path:"/rule",
-    //   component: Rule
-    // },
-    // {
-    //   path: "/config",
-    //   component: Config
-    // },
+
     
   ],
 })
