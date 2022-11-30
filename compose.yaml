@@ -1,0 +1,76 @@
+version: "3"
+
+networks:
+  lecture22:
+    external: false
+
+volumes:
+  keycloak:
+    driver: local
+  mongo:
+    driver: local
+
+services:
+  server1:
+    image: server
+    build: 
+      context: .
+      dockerfile: Dockerfile.server
+    environment:
+      - MONGO_URL=mongodb://mongo
+      - PROXY_KEYCLOAK_TO_LOCALHOST=true
+    depends_on:
+      - mongo
+      - keycloak
+    networks:
+      - lecture22
+  ui1:
+    image: ui
+    build: 
+      context: .
+      dockerfile: Dockerfile.ui
+    networks:
+      - lecture22
+  ui2:
+    image: ui
+    build: 
+      context: .
+      dockerfile: Dockerfile.ui
+    networks:
+      - lecture22
+  load_balancer:
+    image: nginx_load_balancer
+    build: ./nginx-load-balancer
+    networks:
+      - lecture22
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - ui1
+      - ui2
+      - server1
+  keycloak:
+    image: keycloak18
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_USER=keycloak
+      # NOTE: this is only for demonstration purposes
+      # ordinarily, you should NOT embed passwords in files
+      - KEYCLOAK_PASSWORD=keycl0ak
+    restart: always
+    networks:
+      - lecture22
+    volumes:
+      - keycloak:/opt/jboss/keycloak/standalone/data
+    ports:
+      - "127.0.0.1:8081:8080"
+  mongo:
+    image: mongo:4
+    container_name: mongo
+    restart: always
+    networks:
+      - lecture22
+    volumes:
+      - mongo:/data/db
+    ports:
+      - "127.0.0.1:27017:27017"

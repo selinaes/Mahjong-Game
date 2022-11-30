@@ -1,12 +1,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // data model for cards and game state
 
+import * as fs from 'fs'
+
 export const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 export const SUITS = ["bamboo", "character", "dot"]
 
 export const dragonRanks = ["red", "green", "white"]
 export const windRanks = ["east","south","west","north"]
-export const bonusRanks = ["flower","season"]
+// export const bonusRanks = ["flower","season"]
 
 export type CardId = string
 
@@ -22,8 +24,8 @@ export type LocationType = "unused" | "last-card-played" | "player-hand" | "play
 export interface Card {
   id: CardId
   code: number  // code is a unique number for each card (each rank+suit combination)
-  rank: typeof RANKS[number] | typeof dragonRanks[number] | typeof windRanks[number] | typeof bonusRanks[number]
-  suit: typeof SUITS[number] | "dragon" | "wind" | "bonus"
+  rank: typeof RANKS[number] | typeof dragonRanks[number] | typeof windRanks[number] 
+  suit: typeof SUITS[number] | "dragon" | "wind"
   locationType: LocationType
   playerIndex: number | null
   // positionInLocation: number | null
@@ -33,12 +35,12 @@ export interface Config {
   dealer: number //dealer position
   order: number //0:clockwise 1:counterclockwise
   dragonwind: number //0:disable 1:enable
-  bonus: number
+  test: number
 }
 
 
-export function createConfig(dealer: number, order: number, dragonwind: number, bonus: number){
-  const conf: Config = {dealer: dealer, order: order, dragonwind: dragonwind, bonus: bonus}
+export function createConfig(dealer: number, order: number, dragonwind: number, test: number){
+  const conf: Config = {dealer: dealer, order: order, dragonwind: dragonwind, test: test}
   return conf
 }
 
@@ -274,54 +276,63 @@ export function check_3s(rest: number[]): boolean {
  * creates an empty GameState in the initial-card-dealing state
  */
  export function createEmptyGame(playerNames: string[], config: Config): GameState {
-  const cardsById: Record<CardId, Card> = {}
+  let cardsById: Record<CardId, Card> = {}
   let cardId = 0
-
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < SUITS.length; j++) {
-      for (let k = 0; k < RANKS.length; k++) {
-
-    // for (const suit of SUITS) {
-      // for (const rank of RANKS.slice(0, rankLimit)) {
-        const card: Card = {
-          code: j * 10 + (k + 1), // ex. Bamboo1-9 = 01-09, Dot1-9 = 11-19, Character1-9 = 21-29
-          suit: SUITS[j],
-          rank: RANKS[k],
-          id: String(cardId++),
-          locationType: "unused",
-          playerIndex: null,
-          // positionInLocation: null,
+  if(config.test === 0){ //if disable test
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < SUITS.length; j++) {
+        for (let k = 0; k < RANKS.length; k++) {
+  
+      // for (const suit of SUITS) {
+        // for (const rank of RANKS.slice(0, rankLimit)) {
+          const card: Card = {
+            code: j * 10 + (k + 1), // ex. Bamboo1-9 = 01-09, Dot1-9 = 11-19, Character1-9 = 21-29
+            suit: SUITS[j],
+            rank: RANKS[k],
+            id: String(cardId++),
+            locationType: "unused",
+            playerIndex: null,
+            // positionInLocation: null,
+          }
+          cardsById[card.id] = card
         }
-        cardsById[card.id] = card
       }
-    }
-    if(config.dragonwind === 1){
-      //zhong fa bai
-      for(let x = 0; x < dragonRanks.length; ++x){
-        const card: Card = {
-          code:3*10 + x * 2 + 1, //dragon = 31,33,35
-          suit:"dragon",
-          rank:dragonRanks[x],
-          id:String(cardId++),
-          locationType: "unused",
-          playerIndex: null,
+      if(config.dragonwind === 1){
+        //zhong fa bai
+        for(let x = 0; x < dragonRanks.length; ++x){
+          const card: Card = {
+            code:3*10 + x * 2 + 1, //dragon = 31,33,35
+            suit:"dragon",
+            rank:dragonRanks[x],
+            id:String(cardId++),
+            locationType: "unused",
+            playerIndex: null,
+          }
+          cardsById[card.id] = card
         }
-        cardsById[card.id] = card
-      }
-      //dong nan xi bei
-      for(let y = 0; y < windRanks.length; ++y){
-        const card: Card = {
-          code:4 * 10 + y*2 + 1, //wind = 41,43,45,47
-          suit:"wind",
-          rank:windRanks[y],
-          id:String(cardId++),
-          locationType: "unused",
-          playerIndex: null,
+        //dong nan xi bei
+        for(let y = 0; y < windRanks.length; ++y){
+          const card: Card = {
+            code:4 * 10 + y*2 + 1, //wind = 41,43,45,47
+            suit:"wind",
+            rank:windRanks[y],
+            id:String(cardId++),
+            locationType: "unused",
+            playerIndex: null,
+          }
+          cardsById[card.id] = card
         }
-        cardsById[card.id] = card
       }
     }
   }
+  else{
+    let cards: Card[] = JSON.parse(fs.readFileSync("test.json").toString("utf-8"))
+    cards.forEach(card => {
+      cardsById[card.id] = card
+    });
+    console.log("!!!!!!!!!!!!!!!!!!\n")
+  }
+  
 
   // const defaultConfig: Config = {
   //   dealer: 0,
@@ -343,13 +354,17 @@ export function check_3s(rest: number[]): boolean {
  * looks through the cards for a random card in the unused state -- 
  * basically, equivalent to continuously shuffling the deck of discarded cards
  */
-export function findNextCardToDraw(cardsById: Record<CardId, Card>): CardId | null {
+export function findNextCardToDraw(cardsById: Record<CardId, Card>, config: Config): CardId | null {
   const unplayedCardIds = Object.keys(cardsById).filter(cardId => cardsById[cardId].locationType === "unused")
   if (unplayedCardIds.length === 0) {
     return null
   }
-  // return unplayedCardIds[0]
-  return unplayedCardIds[Math.floor(Math.random() * unplayedCardIds.length)]
+  if(config.test === 1){ //for e2e test
+    return unplayedCardIds[0]
+  }
+  else if (config.test === 0){
+    return unplayedCardIds[Math.floor(Math.random() * unplayedCardIds.length)]
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -536,7 +551,7 @@ export function doAction(state: GameState, action: Action): Card[] {
 
   if (state.phase === "initial-card-dealing" && action.action === "draw-card") {
     for(let i = 0; i < 13; ++i){
-      const cardId = findNextCardToDraw(state.cardsById)
+      const cardId = findNextCardToDraw(state.cardsById, state.config)
       if (cardId == null) {
         return []
       }
@@ -545,7 +560,7 @@ export function doAction(state: GameState, action: Action): Card[] {
       changedCards.push(card)
     }
     if(state.currentTurnPlayerIndex === state.config.dealer){ //by default player 0 is the dealer
-      const cardId = findNextCardToDraw(state.cardsById)
+      const cardId = findNextCardToDraw(state.cardsById, state.config)
       if (cardId == null) {
         return []
       }
@@ -621,7 +636,7 @@ export function doAction(state: GameState, action: Action): Card[] {
   }
 
   else if (state.phase === "draw" && action.action === "draw-card") {
-    const cardId = findNextCardToDraw(state.cardsById)
+    const cardId = findNextCardToDraw(state.cardsById, state.config)
     if (cardId == null) {
       return []
     }

@@ -26,14 +26,15 @@ const router = new VueRouter({
       component: Config
     },
     {
-      path: "/:playerIndex",
+      path: "/",
       component: Game,
-      props (route) {
-        return {
-          playerIndex: route.params.playerIndex
-        }
-      }
-    }
+      // props (route) {
+      //   return {
+      //     playerIndex: route.params.playerIndex
+      //   }
+      // }
+    },
+
     
   ],
 })
