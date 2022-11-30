@@ -89,9 +89,10 @@ const wrap = (middleware: any) => (socket: any, next: any) => middleware(socket.
 io.use(wrap(sessionMiddleware))
 
 // hard-coded game configuration
+let currentConfig = createConfig(0,0,0,0)
+
 const playerUserIds = ["dennis", "alice", "kevin", "kate"]
-let gameState = createEmptyGame(playerUserIds)
-let currentConfig = createConfig(2,2)
+let gameState = createEmptyGame(playerUserIds, currentConfig)
 
 
 function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
@@ -160,7 +161,7 @@ io.on('connection', client => {
   })
 
   client.on("update-config", (config: Config) => {
-    if (typeof config.numberOfDecks !== "number" || typeof config.rankLimit !== "number" || Object.keys(config).length !== 2) {
+    if (typeof config.dealer !== "number" || typeof config.order !== "number" || typeof config.dragonwind !== "number" || typeof config.bonus !== "number" || Object.keys(config).length !== 4) {
       setTimeout( () => {
         io.emit(
           "update-config-reply",
@@ -238,7 +239,7 @@ io.on('connection', client => {
   })
 
   client.on("new-game", () => {
-    gameState = createEmptyGame(gameState.playerNames)
+    gameState = createEmptyGame(gameState.playerNames, currentConfig)
     const updatedCards = Object.values(gameState.cardsById)
     emitUpdatedCardsForPlayers(updatedCards, true)
     io.to("all").emit(

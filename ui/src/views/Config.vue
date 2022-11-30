@@ -1,33 +1,56 @@
 <template>
   <div>
-  <p class="h1"> Setting Configuration for Next Game</p>
+  <h1> Setting Configuration</h1>
+  <p> Changes will take effect starting next game</p>
   <b-overlay :show="busy">
     <b-container fluid>
       <b-row class="my-1" >
-        <b-col sm="1">
-          <label for="sb-num-decks">Number of Decks: [{{currentConfig.numberOfDecks}}]</label>
+        <b-col sm="4">
+          <label for="sb-num-decks">Dealer Position: [{{currentConfig.dealer}}]</label>
         </b-col>
-        <b-col sm="7">
-          <b-form-input v-model="currentConfig.numberOfDecks" type= "number" placeholder="Enter new # of decks" inline number></b-form-input>
-        </b-col>
-        <b-col sm="2">
-          <b-button size="sm" @click="getConfig" >Get Config</b-button>
+        <b-col sm="5">
+          <b-form-input v-model="currentConfig.dealer" type= "number" placeholder="Enter config dealer position" inline number></b-form-input>
         </b-col>
       </b-row>
       <b-row class="my-1" >
-        <b-col sm="1">
-          <label for="sb-rank-limit">Rank Limit: [{{currentConfig.rankLimit}}]</label>
+        <b-col sm="4">
+          <label for="sb-rank-limit">Order of Playing(0: clockwise, 1: counterclockwise): [{{currentConfig.order}}]</label>
         </b-col>
-        <b-col sm="7">
-          <b-form-input v-model="currentConfig.rankLimit" type= "number" placeholder="Enter new rank limit" inline number></b-form-input>
+        <b-col sm="5">
+          <b-form-input v-model="currentConfig.order" type= "number" placeholder="Enter order of playing" inline number></b-form-input>
+        </b-col>    
+      </b-row>
+      <b-row class="my-1" >
+        <b-col sm="4">
+          <label for="sb-num-decks">Enable Dragon and Wind(0: disable, 1: enable): [{{currentConfig.dragonwind}}]</label>
         </b-col>
-        <b-col sm="2">
-          <b-button size="sm" @click="requestUpdateConfig(currentConfig.numberOfDecks, currentConfig.rankLimit)" >Update Config</b-button>
+        <b-col sm="5">
+          <b-form-input v-model="currentConfig.dragonwind" type= "number" placeholder="Enter if enable dragon and wind" inline number></b-form-input>
         </b-col>
       </b-row>
-    </b-container>
+      <b-row class="my-1" >
+        <b-col sm="4">
+          <label for="sb-num-decks">Enable Bonus(0: disable, 1: enable): [{{currentConfig.bonus}}]</label>
+        </b-col>
+        <b-col sm="5">
+          <b-form-input v-model="currentConfig.bonus" type= "number" placeholder="Enter if enable dragon and wind" inline number></b-form-input>
+        </b-col>
+      </b-row>
+      <b-row class="my-1" >
+        <b-col sm="2">
+          <b-button size="sm" @click="getConfig" >Get Config</b-button>
+        </b-col>
+        <b-col sm="2">
+          <b-button size="sm" @click="requestUpdateConfig(currentConfig.dealer, currentConfig.order, currentConfig.dragonwind, currentConfig.bonus)" >Update Config</b-button>
+        </b-col>
+        <b-col sm="2">
+          <b-button size="sm" @click="$router.go(-1)" >Go Back</b-button>
+        </b-col>
+      </b-row>
+        </b-container>
   </b-overlay>
-  <b-button size="sm" @click="$router.go(-1)" >Go Back</b-button>
+
+  
   </div>
 </template>
 
@@ -35,11 +58,12 @@
 import { computed, onMounted, ref, Ref } from 'vue'
 import { io } from "socket.io-client"
 import { Config } from "../../../server/model"
+import { BIconUpcScan } from 'bootstrap-vue';
 
 
 const socket = io()
 
-const currentConfig: Ref<Config> = ref({numberOfDecks:0, rankLimit:0})
+const currentConfig: Ref<Config> = ref({dealer:0, order:0, dragonwind:0, bonus:0})
 
 const busy = ref(false)
 
@@ -56,10 +80,12 @@ async function getConfig(){
   // alert(JSON.stringify(curConfig))
 }
 
-async function requestUpdateConfig(numDecks: number, rankLimit: number) {
+async function requestUpdateConfig(dealer: number, order: number, dragonwind: number, bonus: number) {
   const updatedConfig: Config = {
-    numberOfDecks: numDecks,
-    rankLimit: rankLimit
+    dealer: dealer,
+    order: order,
+    dragonwind: dragonwind,
+    bonus: bonus,
   }
   const valid = await updateConfig(updatedConfig)
   if (!valid){

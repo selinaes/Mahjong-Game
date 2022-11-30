@@ -4,6 +4,10 @@
 export const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 export const SUITS = ["bamboo", "character", "dot"]
 
+export const dragonRanks = ["red", "green", "white"]
+export const windRanks = ["east","south","west","north"]
+export const bonusRanks = ["flower","season"]
+
 export type CardId = string
 
 // unused: not seen so far 
@@ -18,21 +22,23 @@ export type LocationType = "unused" | "last-card-played" | "player-hand" | "play
 export interface Card {
   id: CardId
   code: number  // code is a unique number for each card (each rank+suit combination)
-  rank: typeof RANKS[number]
-  suit: typeof SUITS[number]
+  rank: typeof RANKS[number] | typeof dragonRanks[number] | typeof windRanks[number] | typeof bonusRanks[number]
+  suit: typeof SUITS[number] | "dragon" | "wind" | "bonus"
   locationType: LocationType
   playerIndex: number | null
   // positionInLocation: number | null
 }
 
 export interface Config {
-  numberOfDecks: number
-  rankLimit: number
+  dealer: number //dealer position
+  order: number //0:clockwise 1:counterclockwise
+  dragonwind: number //0:disable 1:enable
+  bonus: number
 }
 
 
-export function createConfig(numDecks: number, rankLimit: number){
-  const conf: Config = {numberOfDecks: numDecks, rankLimit: rankLimit}
+export function createConfig(dealer: number, order: number, dragonwind: number, bonus: number){
+  const conf: Config = {dealer: dealer, order: order, dragonwind: dragonwind, bonus: bonus}
   return conf
 }
 
@@ -139,7 +145,7 @@ export interface GameState {
   phase: GamePhase
   playCount: number
   // fewerThan2CardsPlayer: number[]
-  // config: Config
+  config: Config
 }
 
 /**
@@ -263,7 +269,7 @@ export function check_3s(rest: number[]): boolean {
 /**
  * creates an empty GameState in the initial-card-dealing state
  */
- export function createEmptyGame(playerNames: string[]): GameState {
+ export function createEmptyGame(playerNames: string[], config: Config): GameState {
   const cardsById: Record<CardId, Card> = {}
   let cardId = 0
 
@@ -285,21 +291,47 @@ export function check_3s(rest: number[]): boolean {
         cardsById[card.id] = card
       }
     }
+    if(config.dragonwind === 1){
+      //zhong fa bai
+      for(let x = 0; x < dragonRanks.length; ++x){
+        const card: Card = {
+          code:3*10 + x * 2 + 1, //dragon = 31,33,35
+          suit:"dragon",
+          rank:dragonRanks[x],
+          id:String(cardId++),
+          locationType: "unused",
+          playerIndex: null,
+        }
+        cardsById[card.id] = card
+      }
+      //dong nan xi bei
+      for(let y = 0; y < windRanks.length; ++y){
+        const card: Card = {
+          code:4 * 10 + y*2 + 1, //wind = 41,43,45,47
+          suit:"wind",
+          rank:windRanks[y],
+          id:String(cardId++),
+          locationType: "unused",
+          playerIndex: null,
+        }
+        cardsById[card.id] = card
+      }
+    }
   }
 
   // const defaultConfig: Config = {
-  //   numberOfDecks: 2,
-  //   rankLimit: 2,
+  //   dealer: 0,
+  //   order: 0,
   // }
 
   return {
     playerNames,
     cardsById,
-    currentTurnPlayerIndex: 0,
+    currentTurnPlayerIndex: config.dealer,
     phase: "initial-card-dealing",
     playCount: 0,
     // fewerThan2CardsPlayer: [],
-    // config: defaultConfig,
+    config: config,
   }
 }
 
@@ -354,7 +386,12 @@ export interface ChowAction {
 export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction | ChowAction
 
 function moveToNextPlayer(state: GameState) {
-  state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
+  if(state.config.order === 0){
+    state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
+  }
+  else if(state.config.order === 1){
+    state.currentTurnPlayerIndex = (state.currentTurnPlayerIndex + 3) % state.playerNames.length
+  }
 }
 
 function moveToSpecificPlayer(state: GameState, playerId: number) {
@@ -462,7 +499,7 @@ export function doAction(state: GameState, action: Action): Card[] {
       moveCardToPlayer(state, card)
       changedCards.push(card)
     }
-    if(state.currentTurnPlayerIndex === 0){ //by default player 0 is the dealer
+    if(state.currentTurnPlayerIndex === state.config.dealer){ //by default player 0 is the dealer
       const cardId = findNextCardToDraw(state.cardsById)
       if (cardId == null) {
         return []
@@ -499,7 +536,7 @@ export function doAction(state: GameState, action: Action): Card[] {
     }
   }
 
-  else if(action.action === "chow"){  // user agreed to pong
+  else if(action.action === "chow"){  // user agreed to chow
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
     if(action.playerIndex !== state.currentTurnPlayerIndex) { // if not xiajia chow
       return []
