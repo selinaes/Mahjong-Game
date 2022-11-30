@@ -62,7 +62,7 @@ io.on('connection', client => {
   })
 
   client.on("update-config", (config: Config) => {
-    if (typeof config.dealer !== "number" || typeof config.order !== "number" || typeof config.dragonwind !== "number" || typeof config.bonus !== "number" || Object.keys(config).length !== 4) {
+    if (typeof config.dealer !== "number" || typeof config.order !== "number" || typeof config.dragonwind !== "number" || typeof config.test !== "number" || Object.keys(config).length !== 4) {
       setTimeout( () => {
         io.emit(
           "update-config-reply",

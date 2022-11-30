@@ -6,7 +6,7 @@
     <b-container fluid>
       <b-row class="my-1" >
         <b-col sm="4">
-          <label for="sb-num-decks">Dealer Position: [{{currentConfig.dealer}}]</label>
+          <label for="sb-num-decks">Dealer Position(0-3): [{{currentConfig.dealer}}]</label>
         </b-col>
         <b-col sm="5">
           <b-form-input v-model="currentConfig.dealer" type= "number" placeholder="Enter config dealer position" inline number></b-form-input>
@@ -30,10 +30,10 @@
       </b-row>
       <b-row class="my-1" >
         <b-col sm="4">
-          <label for="sb-num-decks">Enable Bonus(0: disable, 1: enable): [{{currentConfig.bonus}}]</label>
+          <label for="sb-num-decks">Enable Test(0: disable, 1: enable): [{{currentConfig.test}}]</label>
         </b-col>
         <b-col sm="5">
-          <b-form-input v-model="currentConfig.bonus" type= "number" placeholder="Enter if enable dragon and wind" inline number></b-form-input>
+          <b-form-input v-model="currentConfig.test" type= "number" placeholder="Enter if enable dragon and wind" inline number></b-form-input>
         </b-col>
       </b-row>
       <b-row class="my-1" >
@@ -41,7 +41,7 @@
           <b-button size="sm" @click="getConfig" >Get Config</b-button>
         </b-col>
         <b-col sm="2">
-          <b-button size="sm" @click="requestUpdateConfig(currentConfig.dealer, currentConfig.order, currentConfig.dragonwind, currentConfig.bonus)" >Update Config</b-button>
+          <b-button size="sm" @click="requestUpdateConfig(currentConfig.dealer, currentConfig.order, currentConfig.dragonwind, currentConfig.test)" >Update Config</b-button>
         </b-col>
         <b-col sm="2">
           <b-button size="sm" @click="$router.go(-1)" >Go Back</b-button>
@@ -58,12 +58,11 @@
 import { computed, onMounted, ref, Ref } from 'vue'
 import { io } from "socket.io-client"
 import { Config } from "../../../server/model"
-import { BIconUpcScan } from 'bootstrap-vue';
 
 
 const socket = io()
 
-const currentConfig: Ref<Config> = ref({dealer:0, order:0, dragonwind:0, bonus:0})
+const currentConfig: Ref<Config> = ref({dealer:0, order:0, dragonwind:0, test:0})
 
 const busy = ref(false)
 
@@ -80,12 +79,12 @@ async function getConfig(){
   // alert(JSON.stringify(curConfig))
 }
 
-async function requestUpdateConfig(dealer: number, order: number, dragonwind: number, bonus: number) {
+async function requestUpdateConfig(dealer: number, order: number, dragonwind: number, test: number) {
   const updatedConfig: Config = {
     dealer: dealer,
     order: order,
     dragonwind: dragonwind,
-    bonus: bonus,
+    test: test,
   }
   const valid = await updateConfig(updatedConfig)
   if (!valid){
