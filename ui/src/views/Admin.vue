@@ -11,7 +11,7 @@ import { user } from  "../../../server/setupMongo"
 const userfield = ["_id","role","gameCount","winCount"]
 let all_users: Ref<user[]> = ref([])
 onMounted(async () => {
-  all_users = await (await fetch("/api/all-users")).json()
+  all_users.value = await (await fetch("/api/all-users")).json()
   console.log(all_users.value)
 })
 </script>
