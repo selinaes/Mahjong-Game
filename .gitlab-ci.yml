@@ -30,13 +30,7 @@ build-job:       # This job runs in the build stage, which runs first.
   script:
     - echo "Building application..."
 
-    - cd ui
-    - ls
-    - docker build -t ui .
-    - cd ..
-    - cd server
-    - docker build -t server .
-    - cd ..
+    - docker build -t .
     - cd nginx-load-balancer
     - docker build -t nginx_load_balancer .
     - cd ..
