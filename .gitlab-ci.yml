@@ -30,9 +30,6 @@ build-job:       # This job runs in the build stage, which runs first.
   script:
     - echo "Building application..."
 
-    # The following line is only necessary because the project is under this subdirectory.
-    - cd lecture22-docker-keycloak-smoothie-stand/
-
     - cd ui
     - docker build -t ui .
     - cd ..
@@ -51,9 +48,6 @@ deploy-job:      # This job runs in the deploy stage.
     - when: manual
   script:
     - echo "Deploying application..."
-
-    # The following line is only necessary because the project is under this subdirectory.
-    - cd 590-final-project-mahjong/
 
     - docker compose -f compose.yaml up -d --build
 
