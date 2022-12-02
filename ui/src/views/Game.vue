@@ -124,7 +124,7 @@ socket.on("user-can-kong", (updatedCards: Card[]) => {
 
 socket.on("user-can-pong", (updatedCards: Card[]) => {
   console.log("socket received user-can-pong")
-  actionableCard.value = updatedCards[1].rank + updatedCards[1].suit
+  actionableCard.value = updatedCards[updatedCards.length-1].rank + updatedCards[updatedCards.length-1].suit
   canPong.value = true
   modalShow.value = true
 })

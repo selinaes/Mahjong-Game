@@ -15,7 +15,7 @@ services:
     image: server
     build: 
       context: .
-      dockerfile: ./server/Dockerfile.server
+      dockerfile: Dockerfile.server
     environment:
       - MONGO_URL=mongodb://mongo
       - PROXY_KEYCLOAK_TO_LOCALHOST=true
@@ -28,14 +28,14 @@ services:
     image: ui
     build: 
       context: .
-      dockerfile: ./ui/Dockerfile.ui
+      dockerfile: Dockerfile.ui
     networks:
       - lecture22
   ui2:
     image: ui
     build: 
       context: .
-      dockerfile: ./ui/Dockerfile.ui
+      dockerfile: Dockerfile.ui
     networks:
       - lecture22
   load_balancer:
