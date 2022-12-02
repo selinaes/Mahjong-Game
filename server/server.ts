@@ -207,6 +207,7 @@ io.on('connection', client => {
         updatedCards.splice(0,0) // remove the special 1st place repeated last-played-card
       } else {
         emitUpdatedCardsForPlayers(updatedCards)
+        console.log("UpdatedCards: " + updatedCards)
       }
       console.log("update card is: " + JSON.stringify(updatedCards))
       if (action.action === "play-card"){
@@ -286,14 +287,14 @@ app.get("/api/user", (req, res) => {
   res.json(req.user || {})
 })
 
+let mahjong_users: Collection
+
 // connect to Mongo
 client.connect().then(() => {
   logger.info('connected successfully to MongoDB')
-  db = client.db("test")
-  // operators = db.collection('operators')
-  // orders = db.collection('orders')
-  // customers = db.collection('customers')
-
+  db = client.db("mahjong_users")
+  mahjong_users = db.collection('mahjong_users')
+  // let temp_id = ""
   Issuer.discover("http://127.0.0.1:8081/auth/realms/game/.well-known/openid-configuration").then(issuer => {
     const client = new issuer.Client(keycloak)
   
@@ -309,22 +310,16 @@ client.connect().then(() => {
         logger.info("oidc " + JSON.stringify(userInfo))
 
         const _id = userInfo.preferred_username
-        // const operator = await operators.findOne({ _id })
-        // if (operator != null) {
-        //   userInfo.roles = ["operator"]
-        // } else {
-        //   await customers.updateOne(
-        //     { _id },
-        //     {
-        //       $set: {
-        //         name: userInfo.name
-        //       }
-        //     },
-        //     { upsert: true }
-        //   )
-        //   userInfo.roles = ["customer"]
-        // }
-
+        // temp_id = userInfo.preferred_username
+        const user = await mahjong_users.findOne({_id})
+        if (user == null && _id != "dennis") {
+          mahjong_users.insertOne({
+            _id : _id,
+            role: "gamer",
+            gameCount: 0,
+            winCount: 0
+          })
+        }
         return done(null, userInfo)
       }
     ))
@@ -343,8 +338,21 @@ client.connect().then(() => {
       })
     )    
 
+    app.get("/api/all-users", async (req, res) => {
+      if (req.user?.preferred_username === "dennis"){
+        let all_users = await mahjong_users.find().toArray()
+        res.status(200).json(all_users)
+      }
+      else{
+        res.status(403).json({ error: "Forbidden" })
+      }
+    })
+
     // start server
     server.listen(port)
     logger.info(`Game server listening on port ${port}`)
   })
 })
+
+
+

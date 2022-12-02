@@ -2,6 +2,7 @@
 // data model for cards and game state
 
 import * as fs from 'fs'
+import { testjson } from './test'
 
 export const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 export const SUITS = ["bamboo", "character", "dot"]
@@ -326,7 +327,7 @@ export function check_3s(rest: number[]): boolean {
     }
   }
   else{
-    let cards: Card[] = JSON.parse(fs.readFileSync("test.json").toString("utf-8"))
+    let cards: Card[] = JSON.parse(testjson)
     cards.forEach(card => {
       cardsById[card.id] = card
     });
