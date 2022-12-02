@@ -1,10 +1,10 @@
 # esbuild build
 FROM library/node:16-alpine as esbuild
 WORKDIR /home/node/app
-COPY server/*.js* ./
-COPY server/*.ts* ./
-COPY server/test.json ./
-COPY server/.npmrc ./
+COPY *.js* ./
+COPY *.ts* ./
+COPY test.json ./
+COPY .npmrc ./
 RUN npm i
 RUN ls -al && npm run build
 

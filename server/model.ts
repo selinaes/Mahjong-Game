@@ -727,6 +727,10 @@ export function filterCardsForPlayerPerspective(cards: Card[], playerIndex: numb
   return cards.filter(card => card.playerIndex == null || card.playerIndex === playerIndex).sort((a,b)=> {return a.code - b.code})
 }
 
+export function filterCardsForSetAside(cards:Card[]){
+  return cards.filter(card=>card.locationType == "set-aside")
+}
+
 export function sortCards(cards: Card[]) {
   return cards.sort((a,b)=> {return a.code - b.code})
 }
