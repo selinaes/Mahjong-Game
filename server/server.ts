@@ -1,6 +1,6 @@
 import { createServer } from "http"
 import { Server } from "socket.io"
-import { Action, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser, canChow, getChowCards } from "./model"
+import { Action, createNewGame, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser, canChow, getChowCards } from "./model"
 import express, { NextFunction, Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import pino from 'pino'
@@ -29,6 +29,7 @@ if (process.env.PROXY_KEYCLOAK_TO_LOCALHOST) {
 const mongoUrl = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017'
 const client = new MongoClient(mongoUrl)
 let db: Db
+let mahjong_users: Collection
 
 // set up Express
 const app = express()
@@ -72,15 +73,6 @@ passport.deserializeUser((user: any, done: any) => {
   done(null, user)
 })
 
-function checkAuthenticated(req: Request, res: Response, next: NextFunction) {
-  if (!req.isAuthenticated()) {
-    res.sendStatus(401)
-    return
-  }
-
-  next()
-}
-
 // set up Socket.IO
 const io = new Server(server)
 
@@ -92,8 +84,14 @@ io.use(wrap(sessionMiddleware))
 let currentConfig = createConfig(0,0,0,0)
 
 const playerUserIds = ["dennis", "alice", "kevin", "kate"]
-let gameState = createEmptyGame(playerUserIds, currentConfig)
-
+let gameState = createEmptyGame(playerUserIds, currentConfig) //empty game state and wait for new game
+// playerUserIds.forEach(async (playerUserId) => {
+//   await mahjong_users.updateOne(
+//     { _id: playerUserId},
+//     { $inc: { gameCount: 1 } }
+//   )
+// })
+  
 
 function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
   gameState.playerNames.forEach((_, i) => {
@@ -259,8 +257,14 @@ io.on('connection', client => {
     )
   })
 
-  client.on("new-game", () => {
-    gameState = createEmptyGame(gameState.playerNames, currentConfig)
+  client.on("new-game", async () => {
+    gameState = createNewGame(gameState.playerNames, currentConfig)
+    playerUserIds.forEach(async (playerUserId) => {
+      await mahjong_users.updateOne(
+        { _id: playerUserId},
+        { $inc: { gameCount: 1 } }
+      )
+    })
     const updatedCards = Object.values(gameState.cardsById)
     emitUpdatedCardsForPlayers(updatedCards, true)
     io.to("all").emit(
@@ -286,8 +290,6 @@ app.post(
 app.get("/api/user", (req, res) => {
   res.json(req.user || {})
 })
-
-let mahjong_users: Collection
 
 // connect to Mongo
 client.connect().then(() => {

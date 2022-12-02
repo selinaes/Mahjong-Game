@@ -114,10 +114,12 @@ socket.on("game-state", (newPlayerIndex: number, newCurrentTurnPlayerIndex: numb
 // can kong includes the situation for can-pong. User can select if they want to kong or pong
 socket.on("user-can-kong", (updatedCards: Card[]) => {
   console.log("socket received user-can-kong")
-  actionableCard.value = updatedCards[1].rank + updatedCards[1].suit
+  console.log("updatedCards: " + updatedCards)
+  actionableCard.value = updatedCards[updatedCards.length-1].rank + updatedCards[updatedCards.length-1].suit
   canPong.value = true
   canKong.value = true
   modalShow.value = true
+  console.log("modalShow value: " + modalShow.value)
 })
 
 socket.on("user-can-pong", (updatedCards: Card[]) => {

@@ -4,6 +4,7 @@ import App from '@/App.vue'
 import Game from '@/views/Game.vue'
 import Config from '@/views/Config.vue'
 import Rule from '@/views/Rule.vue'
+import Admin from '@/views/Admin.vue'
 
 import { BootstrapVue, BootstrapVueIcons } from "bootstrap-vue"
 
@@ -17,6 +18,10 @@ Vue.use(VueRouter)
 const router = new VueRouter({
   mode: "history",
   routes: [
+    {
+      path:"/admin",
+      component: Admin,
+    },
     {
       path:"/rule",
       component: Rule

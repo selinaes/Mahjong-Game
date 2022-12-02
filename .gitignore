@@ -4,3 +4,6 @@ todo*.json
 *-grade.yml.old*
 git-log-summary.txt
 .DS_Store
+/test-results/
+/playwright-report/
+/playwright/.cache/

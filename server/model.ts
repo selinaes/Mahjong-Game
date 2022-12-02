@@ -276,7 +276,7 @@ export function check_3s(rest: number[]): boolean {
 /**
  * creates an empty GameState in the initial-card-dealing state
  */
- export function createEmptyGame(playerNames: string[], config: Config): GameState {
+ export function createNewGame(playerNames: string[], config: Config): GameState {
   let cardsById: Record<CardId, Card> = {}
   let cardId = 0
   if(config.test === 0){ //if disable test
@@ -331,15 +331,8 @@ export function check_3s(rest: number[]): boolean {
     cards.forEach(card => {
       cardsById[card.id] = card
     });
-    console.log("!!!!!!!!!!!!!!!!!!\n")
   }
   
-
-  // const defaultConfig: Config = {
-  //   dealer: 0,
-  //   order: 0,
-  // }
-
   return {
     playerNames,
     cardsById,
@@ -347,6 +340,20 @@ export function check_3s(rest: number[]): boolean {
     phase: "initial-card-dealing",
     playCount: 0,
     // fewerThan2CardsPlayer: [],
+    config: config,
+  }
+}
+
+
+//create game with game-over phase
+export function createEmptyGame (playerNames: string[], config: Config): GameState{
+  let cardsById: Record<CardId, Card> = {}
+  return {
+    playerNames: playerNames,
+    cardsById: cardsById,
+    currentTurnPlayerIndex: config.dealer,
+    phase: "game-over",
+    playCount: 0,
     config: config,
   }
 }
