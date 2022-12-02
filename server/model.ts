@@ -480,6 +480,27 @@ function moveCardToSetAside2({ cardsById }: GameState, cardIds: CardId[], player
   }
 }
 
+export function getWinUser(state: GameState){
+  const lastPlayedCard = getLastPlayedCard(state.cardsById)
+  // console.log("getWinUser, lastPlayed is id "+lastPlayedCard.id)
+  let prevId = -1;
+    if(state.config.order === 1){
+      prevId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
+    }
+    else if(state.config.order === 0){
+      prevId = (state.currentTurnPlayerIndex + 3) % state.playerNames.length
+    }
+  for(let userId = 0; userId < state.playerNames.length; userId++){
+    if (prevId === userId) {
+      continue
+    }
+    else if (determineWin(extractPlayerCards(state.cardsById,userId),lastPlayedCard)) {
+      return userId
+    }
+  }
+  return -1
+}
+
 export function getPongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
   console.log("getPongUser, lastPlayed is id "+lastPlayedCard.id)
@@ -573,11 +594,11 @@ export function doAction(state: GameState, action: Action): Card[] {
         return []
       }
       const card = state.cardsById[cardId]
-      moveCardToPlayer(state, card)
-      changedCards.push(card)
       if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
         state.phase = "game-over"
       }
+      moveCardToPlayer(state, card)
+      changedCards.push(card)
       
     }
     moveToNextPlayer(state)
@@ -649,15 +670,16 @@ export function doAction(state: GameState, action: Action): Card[] {
       return []
     }
     const card = state.cardsById[cardId]
-    moveCardToPlayer(state, card)
-    changedCards.push(card)
-    
     // if player zimo
     if(determineWin(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),card) === true){
       state.phase = "game-over"
+    } else {
+      state.phase = "play"
     }
-    state.phase = "play"
+    moveCardToPlayer(state, card)
+    changedCards.push(card)
   }
+  
   else if (state.phase === "play" && action.action === "play-card") {
     const card = state.cardsById[action.cardId]
     if (card.playerIndex !== state.currentTurnPlayerIndex || card.locationType !== "player-hand") {

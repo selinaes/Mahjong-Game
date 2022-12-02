@@ -24,6 +24,12 @@
           <b-button  @click="chow(choice)" :disabled="!choiceShow">{{formatChowSet(choice)}}</b-button>
           </div>
         </b-modal>
+
+        <b-modal id="win-modal" v-model="winShow" hide-footer title="You Won!">
+          <p class="my-2">You won by adding this card played by another user: </p>
+          <p>{{winCard}}</p>
+          <b-button  @click="$bvModal.hide('win-modal')" >Yay! Close this.</b-button>
+        </b-modal>
       </div>
 
     <b-button class="mx-2 my-2" size="sm" @click="socket.emit('new-game')">New Game</b-button>
@@ -86,6 +92,8 @@ const canKong = ref(false)
 const canChow = ref(false)
 const modalShow = ref(false)
 const choiceShow = ref(false)
+const winShow = ref(false)
+const winCard = ref("")
 const actionableCard = ref("")
 const chowChoices: Ref<Card[][]> = ref([])
 
@@ -109,6 +117,12 @@ socket.on("game-state", (newPlayerIndex: number, newCurrentTurnPlayerIndex: numb
   currentTurnPlayerIndex.value = newCurrentTurnPlayerIndex
   phase.value = newPhase
   playCount.value = newPlayCount
+})
+
+socket.on("user-win", (updatedCards: Card[]) => {
+  console.log("socket received user-win")
+  winCard.value = updatedCards[updatedCards.length-1].rank + updatedCards[updatedCards.length-1].suit
+  winShow.value = true
 })
 
 // can kong includes the situation for can-pong. User can select if they want to kong or pong

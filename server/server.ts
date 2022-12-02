@@ -1,6 +1,6 @@
 import { createServer } from "http"
 import { Server } from "socket.io"
-import { Action, createNewGame, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser, canChow, getChowCards } from "./model"
+import { Action, createNewGame, createEmptyGame, createConfig, doAction, filterCardsForPlayerPerspective, Card, Config, getPongUser, getKongUser, canChow, getChowCards, getWinUser } from "./model"
 import express, { NextFunction, Request, Response } from 'express'
 import bodyParser from 'body-parser'
 import pino from 'pino'
@@ -197,6 +197,7 @@ io.on('connection', client => {
     let updatedCards: Card[]
     let pongUserId: number = -1
     let kongUserId: number = -1
+    let winUserId: number = -1
     let chowCardSets: Card[][] = []
     if (typeof playerIndex === "number") {
       updatedCards = doAction(gameState, { ...action, playerIndex })
@@ -205,14 +206,18 @@ io.on('connection', client => {
         updatedCards.splice(0,0) // remove the special 1st place repeated last-played-card
       } else {
         emitUpdatedCardsForPlayers(updatedCards)
-        console.log("UpdatedCards: " + updatedCards)
       }
-      console.log("update card is: " + JSON.stringify(updatedCards))
+      // console.log("update card is: " + JSON.stringify(updatedCards))
       if (action.action === "play-card"){
         pongUserId = getPongUser(gameState)
         kongUserId = getKongUser(gameState)
         chowCardSets = getChowCards(gameState)
-        console.log(`this play, pong ${pongUserId}, kong ${kongUserId}, chow ${chowCardSets.length} `)
+        winUserId = getWinUser(gameState)
+        console.log(`this play, pong ${pongUserId}, kong ${kongUserId}, chow ${chowCardSets.length}, win ${winUserId} `)
+      }
+
+      if (action.action === "draw-card" && gameState.phase === "game-over") {
+        winUserId = action.playerIndex
       }
     } else {
       // no actions allowed from "all"
@@ -222,28 +227,37 @@ io.on('connection', client => {
       "updated-cards", 
       Object.values(gameState.cardsById),    
     )
-    if (kongUserId !== -1) {
-      console.log("user-can-kong, Id"+kongUserId)
-      io.to(kongUserId.toString()).emit(
-        "user-can-kong",
-        updatedCards
-      )
-    }
-    else if (pongUserId !== -1) {
-      console.log("user-can-pong, Id"+pongUserId)
-      io.to(pongUserId.toString()).emit(
-        "user-can-pong",
-        updatedCards
-      )
-    }
-    if (chowCardSets.length > 0) {
-      console.log("user-can-chow")
-      console.log(JSON.stringify(chowCardSets))
-      io.to(gameState.currentTurnPlayerIndex.toString()).emit(
-        "user-can-chow",
-        chowCardSets,
-        updatedCards[updatedCards.length-1] // should be the newly played card, in a "play-card" action
-      )
+    if (winUserId !== -1) {
+      gameState.phase = "game-over"
+      console.log("user-win, Id: "+winUserId)
+        io.to(winUserId.toString()).emit(
+          "user-win",
+          updatedCards
+        )
+    } else {
+      if (kongUserId !== -1) {
+        console.log("user-can-kong, Id"+kongUserId)
+        io.to(kongUserId.toString()).emit(
+          "user-can-kong",
+          updatedCards
+        )
+      }
+      else if (pongUserId !== -1) {
+        console.log("user-can-pong, Id"+pongUserId)
+        io.to(pongUserId.toString()).emit(
+          "user-can-pong",
+          updatedCards
+        )
+      }
+      if (chowCardSets.length > 0) {
+        console.log("user-can-chow")
+        console.log(JSON.stringify(chowCardSets))
+        io.to(gameState.currentTurnPlayerIndex.toString()).emit(
+          "user-can-chow",
+          chowCardSets,
+          updatedCards[updatedCards.length-1] // should be the newly played card, in a "play-card" action
+        )
+      }
     }
 
     
