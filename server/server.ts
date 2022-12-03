@@ -83,7 +83,7 @@ io.use(wrap(sessionMiddleware))
 // hard-coded game configuration
 let currentConfig = createConfig(0,0,0,0)
 
-const playerUserIds = ["dennis", "alice", "kevin", "kate"]
+export const playerUserIds = ["dennis", "alice", "kevin", "kate"]
 let gameState = createEmptyGame(playerUserIds, currentConfig) //empty game state and wait for new game
 
 //update winner in mongodb
@@ -202,7 +202,7 @@ io.on('connection', client => {
     let chowCardSets: Card[][] = []
     if (typeof playerIndex === "number") {
       updatedCards = doAction(gameState, { ...action, playerIndex })
-      if (action.action === "chow" || action.action === "kong" || action.action === "pong") {
+      if ((action.action === "chow" || action.action === "kong" || action.action === "pong") && updatedCards.length > 0) {
         emitUpdatedCardsForSpecialOps(updatedCards)
         updatedCards.splice(0,0) // remove the special 1st place repeated last-played-card
       } else {
