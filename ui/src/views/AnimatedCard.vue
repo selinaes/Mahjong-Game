@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class= "grid-container">
   <b-card
     :title="card.rank+ ' '+ card.suit"
     :bg-variant="cardColor(card.locationType)"
@@ -21,9 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, Ref } from 'vue'
-import { io } from "socket.io-client"
-import { Card, GamePhase, Action, areCompatible, CardId, LocationType } from "../../../server/model"
+import { Card, LocationType } from "../../../server/model"
 
 // props
 interface Props {
@@ -60,3 +58,12 @@ function cardColor(type: LocationType){
   }
 }
 </script>
+
+<style>
+  .grid-container{
+    display:grid;
+    grid-template-columns:repeat(1,200px);
+    grid-gap: 3em;
+    justify-content: center;
+  }
+</style>

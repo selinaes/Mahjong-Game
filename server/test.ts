@@ -446,5 +446,13 @@ export const testjson = JSON.stringify([
       "id": "55",
       "locationType": "unused",
       "playerIndex": null
+    },
+    {
+      "code": 11, 
+      "suit": "character",
+      "rank": "1",
+      "id": "56",
+      "locationType": "unused",
+      "playerIndex": null
     }
   ])

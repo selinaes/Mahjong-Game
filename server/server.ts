@@ -85,13 +85,14 @@ let currentConfig = createConfig(0,0,0,0)
 
 const playerUserIds = ["dennis", "alice", "kevin", "kate"]
 let gameState = createEmptyGame(playerUserIds, currentConfig) //empty game state and wait for new game
-// playerUserIds.forEach(async (playerUserId) => {
-//   await mahjong_users.updateOne(
-//     { _id: playerUserId},
-//     { $inc: { gameCount: 1 } }
-//   )
-// })
-  
+
+//update winner in mongodb
+async function updateWinCount(winner: string){
+  await mahjong_users.updateOne(
+    { _id: winner},
+    { $inc: { winCount: 1 } }
+  )
+}
 
 function emitUpdatedCardsForPlayers(cards: Card[], newGame = false) {
   gameState.playerNames.forEach((_, i) => {
@@ -213,11 +214,13 @@ io.on('connection', client => {
         kongUserId = getKongUser(gameState)
         chowCardSets = getChowCards(gameState)
         winUserId = getWinUser(gameState)
+        updateWinCount(playerUserIds[winUserId])
         console.log(`this play, pong ${pongUserId}, kong ${kongUserId}, chow ${chowCardSets.length}, win ${winUserId} `)
       }
 
       if (action.action === "draw-card" && gameState.phase === "game-over") {
         winUserId = action.playerIndex
+        updateWinCount(playerUserIds[winUserId])
       }
     } else {
       // no actions allowed from "all"

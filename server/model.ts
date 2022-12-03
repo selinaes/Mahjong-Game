@@ -1,7 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////
 // data model for cards and game state
 
-import * as fs from 'fs'
 import { testjson } from './test'
 
 export const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -43,17 +42,6 @@ export interface Config {
 export function createConfig(dealer: number, order: number, dragonwind: number, test: number){
   const conf: Config = {dealer: dealer, order: order, dragonwind: dragonwind, test: test}
   return conf
-}
-
-/**
- * determines whether one can play a card given the last card played
- */
-export function areCompatible(card: Card, lastCardPlayed: Card) {
-  return true
-  // if (card.rank === 'K' || lastCardPlayed.rank === 'K'){
-  //   return true
-  // }
-  // return card.rank === lastCardPlayed.rank || card.suit === lastCardPlayed.suit
 }
 
 // determine whether a player can chow a card
@@ -142,7 +130,6 @@ export function canKong(cards: Card[], lastCardPlayed: Card){
   return [] 
 }
 
-// ?????
 export type GamePhase = "initial-card-dealing" | "draw" | "play" | "game-over" 
 
 export interface GameState {
@@ -168,25 +155,6 @@ export function computePlayerCardCounts({ playerNames, cardsById }: GameState) {
   return counts
 }
 
-// /**
-//  * @returns an array of the players who have 2 or fewer cards in hand
-//  */
-//  export function computePlayers2FewerCard({ playerNames, cardsById }: GameState) {
-//   const counts = playerNames.map(_ => 0)
-//   Object.values(cardsById).forEach(({ playerIndex }) => {
-//     if (playerIndex != null) {
-//       ++counts[playerIndex]
-//     }
-//   })
-//   const fewerPlayers:number[] = []
-//   counts.forEach( (count, playerIndex) => {
-//     if (count <= 2) {
-//       fewerPlayers.push(playerIndex)
-//     }
-//   })
-//   return fewerPlayers
-// }
-
 /**
  * finds the last played card
  */
@@ -198,19 +166,8 @@ export function getLastPlayedCard(cardsById: Record<CardId, Card>) {
  * extracts the cards that are currently in the given player's hand
  */
  export function extractPlayerCards(cardsById: Record<CardId, Card>, playerIndex: number): Card[] {
-  return Object.values(cardsById).filter(({ playerIndex: x }) => x === playerIndex)
+  return Object.values(cardsById).filter(({ playerIndex: x, locationType: y }) => x === playerIndex && y === "player-hand")
 }
-
-/**
- * determines if someone has won the game -- i.e., has no cards left in their hand
- */
-//  export function determineWinner(state: GameState) {
-//   if (state.phase === "initial-card-dealing") {
-//     return null
-//   }
-  // const playerIndex = computePlayerCardCounts(state).indexOf(0)
-  // return playerIndex === -1 ? null : playerIndex
-// }
 
 /**
  * determines if a player has won the game -- (Hu), used as a helper in doAction
@@ -405,11 +362,6 @@ export interface ChowAction {
   cardIds: CardId[]
 }
 
-// export interface ChooseChowAction {
-//   action: "choose-chow"
-//   playerIndex: number
-// }
-
 export type Action = DrawCardAction | PlayCardAction | PongAction | KongAction | ChowAction
 
 function moveToNextPlayer(state: GameState) {
@@ -426,13 +378,9 @@ function moveToSpecificPlayer(state: GameState, playerId: number) {
 }
 
 function moveCardToPlayer({ currentTurnPlayerIndex, cardsById }: GameState, card: Card) {
-  // add to end position
-  // const currentCardPositions = extractPlayerCards(cardsById, currentTurnPlayerIndex).map(x => x.positionInLocation)
-
   // update state
   card.locationType = "player-hand"
   card.playerIndex = currentTurnPlayerIndex
-  // card.positionInLocation = Math.max(-1, ...currentCardPositions) + 1
 }
 
 function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, card: Card) {
@@ -447,7 +395,6 @@ function moveCardToLastPlayed({ currentTurnPlayerIndex, cardsById }: GameState, 
   card.locationType = "last-card-played"
   card.playerIndex = null
   console.log("moved card id-"+card.id+"to last played")
-  // card.positionInLocation = null
 }
 
 // ** playerId is the player index of the pong/kong/chow user 
@@ -551,14 +498,6 @@ export function getKongUser(state: GameState){
 
 export function getChowCards(state: GameState):Card[][]{
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
-  // let nextId = -1;
-  // if(state.config.order === 0){
-  //   nextId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
-  // }
-  // else if(state.config.order === 1){
-  //   nextId = (state.currentTurnPlayerIndex + 3) % state.playerNames.length
-  // }
-  // let nextId = (lastPlayedCard.playerIndex + 1) % 4
   return canChow(extractPlayerCards(state.cardsById,state.currentTurnPlayerIndex),lastPlayedCard)
 }
 
@@ -688,13 +627,6 @@ export function doAction(state: GameState, action: Action): Card[] {
       return []
     }
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    // if (lastPlayedCard == null) {
-    //   return []
-    // }
-    // if (!areCompatible(lastPlayedCard, card)) {
-    //   return []
-    // }
-    // if this is the first play (no "last-played-card" exist)
     if (lastPlayedCard){
       changedCards.push(lastPlayedCard)
     }
@@ -704,42 +636,9 @@ export function doAction(state: GameState, action: Action): Card[] {
     moveToNextPlayer(state)
   }
 
-  // if (state.phase === "play" && action.action !== "draw-card") {
-  //   moveToNextPlayer(state)
-  // }
-
-  // if (state.phase === "play"){
-  //   state.fewerThan2CardsPlayer = computePlayers2FewerCard(state)
-  // }
-
-  // if (determineWinner(state) != null) {
-  //   state.phase = "game-over"
-  // }
-
   ++state.playCount
 
   return changedCards
-}
-
-export function formatCard(card: Card, includeLocation = false) {
-  let paddedCardId = card.id
-  while (paddedCardId.length < 3) {
-    paddedCardId = " " + paddedCardId
-  }
-  return `[${paddedCardId}] ${card.rank}${card.suit}${(card.rank.length === 1 ? " " : "")}`
-    + (includeLocation
-      ? ` ${card.locationType} ${card.playerIndex ?? ""}`
-      : ""
-    )
-}
-
-export function printState({ playerNames, cardsById, currentTurnPlayerIndex, phase, playCount }: GameState) {
-  const lastPlayedCard = getLastPlayedCard(cardsById)
-  console.log(`#${playCount} ${phase} ${lastPlayedCard ? formatCard(lastPlayedCard) : ""}`)
-  playerNames.forEach((name, playerIndex) => {
-    const cards = extractPlayerCards(cardsById, playerIndex)
-    console.log(`${name}: ${cards.map(card => formatCard(card)).join(' ')} ${playerIndex === currentTurnPlayerIndex ? ' *TURN*' : ''}`)
-  })
 }
 
 /**
@@ -747,10 +646,6 @@ export function printState({ playerNames, cardsById, currentTurnPlayerIndex, pha
  */
 export function filterCardsForPlayerPerspective(cards: Card[], playerIndex: number) {
   return cards.filter(card => card.playerIndex == null || card.playerIndex === playerIndex).sort((a,b)=> {return a.code - b.code})
-}
-
-export function filterCardsForSetAside(cards:Card[]){
-  return cards.filter(card=>card.locationType == "set-aside")
 }
 
 export function sortCards(cards: Card[]) {
