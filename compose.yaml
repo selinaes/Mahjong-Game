@@ -64,6 +64,15 @@ services:
       - keycloak:/opt/jboss/keycloak/standalone/data
     ports:
       - "127.0.0.1:8081:8080"
+  e2e:
+    image: e2e
+    build: 
+      context: .
+      dockerfile: Dockerfile.e2e
+    depends_on:
+      - server1
+    networks:
+      - lecture22  
   mongo:
     image: mongo:4
     container_name: mongo

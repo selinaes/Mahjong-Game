@@ -46,17 +46,13 @@ deploy-job:      # This job runs in the deploy stage.
 
     - docker compose -f compose.yaml up -d --build
 
-# e2e-test-job:   # This job runs in the test stage.
-#   stage: test 
-#   rules:
-#     # The following prevents the pipeline from running except when run
-#     # manually via the GitLab web interface.
-#     - when: manual
-#   script:
-#     - echo "Running E2E tests..."
+e2e-test-job:   # This job runs in the test stage.
+  stage: test 
+  rules:
+    # The following prevents the pipeline from running except when run
+    # manually via the GitLab web interface.
+    - when: manual
+  script:
+    - echo "Running E2E tests..."
 
-#     # The following line is only necessary because the project is under this subdirectory.
-#     - cd lecture22-docker-keycloak-smoothie-stand/
-
-#     - cd lecture22-docker-keycloak-smoothie-stand/
-#     - docker run -t --rm --ipc=host mcr.microsoft.com/playwright:v1.28.0-focal /bin/bash -c 'npx playwright test --project=chromium'
+    - docker run -t --rm --ipc=host mcr.microsoft.com/playwright:v1.28.1-focal /bin/bash -c 'npx playwright test --project=chromium'

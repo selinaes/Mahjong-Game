@@ -1,0 +1,12 @@
+FROM mcr.microsoft.com/playwright:v1.28.0-focal
+COPY e2e/* ./tests/
+COPY playwright.config.ts ./
+COPY package*.json ./
+RUN npm i
+ENV APP_URL http://server1:8099
+ENV CI true
+
+RUN npm i wait-on http-proxy
+ENTRYPOINT npm exec wait-on http://keycloak:8080 && echo Keycloak up! && node -e 'const httpProxy = require("http-proxy"); httpProxy.createProxyServer({ target: "http://keycloak:8080" }).listen(8081); httpProxy.createProxyServer({ target: "http://load_balancer:80" }).listen(8080)'
+# ENTRYPOINT tail -f /dev/null
+#ENTRYPOINT xvfb-run npx playwright test
