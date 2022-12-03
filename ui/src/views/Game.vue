@@ -45,28 +45,29 @@
       </b-card>
     </div>
     <h1 v-if = "(phase === 'game-over')"> Waiting for New Game to Start ...</h1>
-    <h4 v-if = "(phase !== 'game-over')"> Playerhand Tiles: </h4>
-    <div v-if = "(phase !== 'game-over')">
-    <div>
-      <div v-for="card in cards.filter(card => card.locationType === 'player-hand')" :key="card.id" class = "test">
-        <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
-      </div>
-    </div>
-    <h4 v-if = "(phase !== 'game-over')"> Player Setaside Tiles(chow pong gang): </h4>
-    <div>
-      <div v-for="card in cards.filter(card => card.locationType === 'set-aside')" :key="card.id" class = "test">
-        <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
-      </div>
-    </div>
-    <h4 v-if = "(phase !== 'game-over')"> Played Tiles & Last-played Tile</h4>
-    <div>
-      <div v-for="card in cards.filter(card => card.playerIndex === null)" :key="card.id" class = "test">
-        <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
-      </div>
-    </div>
 
-    <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
-    <b-button class="mx-2 my-2" size="sm" @click="sortCards" >Sort Cards</b-button>
+    <div v-if = "(phase === 'initial-card-dealing' || phase === 'draw' || phase === 'play')">
+      <h4> Playerhand Tiles: </h4>
+      <div>
+        <div v-for="card in cards.filter(card => card.locationType === 'player-hand')" :key="card.id" class = "test">
+          <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
+        </div>
+      </div>
+      <h4> Player Setaside Tiles(chow pong gang): </h4>
+      <div>
+        <div v-for="card in cards.filter(card => card.locationType === 'set-aside')" :key="card.id" class = "test">
+          <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
+        </div>
+      </div>
+      <h4> Played Tiles & Last-played Tile</h4>
+      <div>
+        <div v-for="card in cards.filter(card => card.playerIndex === null)" :key="card.id" class = "test">
+          <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
+        </div>
+      </div>
+
+      <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
+      <b-button class="mx-2 my-2" size="sm" @click="sortCards" >Sort Cards</b-button>
     </div>
   </div>
 </template>
