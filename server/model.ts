@@ -451,15 +451,15 @@ export function getWinUser(state: GameState){
 export function getPongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
   console.log("getPongUser, lastPlayed is id "+lastPlayedCard.id)
-  for(let userId = 0; userId < state.playerNames.length; userId++){
-    // console.log("increment i is"+userId)
-    let prevId = -1;
+  let prevId = -1;
     if(state.config.order === 1){
       prevId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
     }
     else if(state.config.order === 0){
       prevId = (state.currentTurnPlayerIndex + 3) % state.playerNames.length
     }
+  for(let userId = 0; userId < state.playerNames.length; userId++){
+    // console.log("increment i is"+userId)
     if (prevId === userId) {
       continue
     }
@@ -475,14 +475,14 @@ export function getPongUser(state: GameState){
 export function getKongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
   console.log("getKongUser, lastPlayed is id "+lastPlayedCard.id)
-  for(let userId = 0; userId < state.playerNames.length; userId++){
-    let prevId = -1;
+  let prevId = -1;
     if(state.config.order === 1){
       prevId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
     }
     else if(state.config.order === 0){
       prevId = (state.currentTurnPlayerIndex + 3) % state.playerNames.length
     }
+  for(let userId = 0; userId < state.playerNames.length; userId++){
     if (prevId === userId) {
       continue
     }
@@ -547,9 +547,9 @@ export function doAction(state: GameState, action: Action): Card[] {
     }
   }
   
-  else if(action.action === "pong"){  // user agreed to pong
+  else if(action.action === "pong"){  // user agreed to pong  (but not sure if the action is still available)
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+    if (lastPlayedCard === null || lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
       return []
     }
     let pongcards = canPong(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
@@ -562,12 +562,12 @@ export function doAction(state: GameState, action: Action): Card[] {
       console.log("changeCards: " + changedCards)
       moveToSpecificPlayer(state, action.playerIndex)
       state.phase = "play"
-    }
+    } 
   }
 
-  else if(action.action === "chow"){  // user agreed to chow
+  else if(action.action === "chow"){  // user agreed to chow (but not sure if the action is still available)
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    if(action.playerIndex !== state.currentTurnPlayerIndex) { // if not xiajia chow
+    if(lastPlayedCard === null || action.playerIndex !== state.currentTurnPlayerIndex) { // if not xiajia chow
       return []
     }
     let chowcards = canChow(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
@@ -586,7 +586,7 @@ export function doAction(state: GameState, action: Action): Card[] {
   
   else if (action.action === "kong") {
     const lastPlayedCard = getLastPlayedCard(state.cardsById)
-    if (lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
+    if (lastPlayedCard === null || lastPlayedCard.playerIndex === action.playerIndex) { // if last played card is own card
       return []
     }
     let kongcards = canKong(extractPlayerCards(state.cardsById,action.playerIndex),lastPlayedCard)
@@ -646,8 +646,4 @@ export function doAction(state: GameState, action: Action): Card[] {
  */
 export function filterCardsForPlayerPerspective(cards: Card[], playerIndex: number) {
   return cards.filter(card => card.playerIndex == null || card.playerIndex === playerIndex).sort((a,b)=> {return a.code - b.code})
-}
-
-export function sortCards(cards: Card[]) {
-  return cards.sort((a,b)=> {return a.code - b.code})
 }

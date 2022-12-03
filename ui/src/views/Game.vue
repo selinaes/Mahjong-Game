@@ -14,7 +14,7 @@
           <b-button  @click="$bvModal.hide('special-action-modal')">Pass</b-button>
         </b-modal>
 
-        <b-modal id="chow-choices-modal" v-model="choiceShow" title="Chow Choices">
+        <b-modal id="chow-choices-modal" v-model="choiceShow" hide-footer title="Chow Choices">
           <p class="my-2">Select one of the following sets</p>
           <div
             v-for="choice in chowChoices"
@@ -24,7 +24,7 @@
         </b-modal>
 
         <b-modal id="win-modal" v-model="winShow" hide-footer title="You Won!">
-          <p class="my-2">You won by adding this card played by another user: </p>
+          <p class="my-2">You won by adding this card to your deck: </p>
           <p>{{winCard}}</p>
           <b-button  @click="$bvModal.hide('win-modal')" >Yay! Close this.</b-button>
         </b-modal>
@@ -35,7 +35,7 @@
     <b-badge class="mr-2 mb-2">{{ phase }}</b-badge>
     <b-badge class="mr-4 mb-3">{{"Current # of cards: " + cards.length}}</b-badge>
     
-    <router-link :to="{ path: '/config'}"><b-button class="mx-2 my-2" :disabled="phase!=='game-over'">Config</b-button></router-link>
+    <router-link :to="{ path: '/config'}"><b-button class="mx-2 my-2" >Config</b-button></router-link>
     <div>
       <p>Last Played card: {{JSON.stringify(lastPlayed)}}</p>
       <b-card no-body class="text-center">
@@ -66,6 +66,7 @@
     </div>
 
     <b-button class="mx-2 my-2" size="sm" @click="drawCard" :disabled="!canDraw">Draw Card</b-button>
+    <b-button class="mx-2 my-2" size="sm" @click="sortCards" >Sort Cards</b-button>
     </div>
   </div>
 </template>
@@ -232,7 +233,7 @@ async function pong(){
   if (typeof playerIndex.value === "number") {
     const updatedCards = await doAction({ action: "pong", playerIndex: playerIndex.value})
     if (updatedCards.length === 0) {
-      alert("didn't work")
+      alert("sorry, Pong failed. ")
     } else { // succeed
       canPong.value = false
       modalShow.value = false
@@ -244,7 +245,7 @@ async function kong(){
   if (typeof playerIndex.value === "number") {
     const updatedCards = await doAction({ action: "kong", playerIndex: playerIndex.value})
     if (updatedCards.length === 0) {
-      alert("didn't work")
+      alert("sorry, Kong failed. ")
     } else { // succeed
       canKong.value = false
       modalShow.value = false
@@ -257,7 +258,7 @@ async function chow(set: Card[]){
     const cardIds = set.map(card => card.id)
     const updatedCards = await doAction({ action: "chow", playerIndex: playerIndex.value, cardIds})
     if (updatedCards.length === 0) {
-      alert("didn't work")
+      alert("Sorry, Chow failed. Someone else ponged or konged")
     } else { // succeed
       canChow.value = false
       choiceShow.value = false
@@ -282,6 +283,10 @@ async function applyUpdatedCards(updatedCards: Card[]) {
       cards.value.push(x)
     }
   }
+}
+
+function sortCards() {
+  return cards.value = cards.value.sort((a,b)=> {return a.code - b.code})
 }
 
 
