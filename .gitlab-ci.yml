@@ -31,6 +31,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - echo "Building application..."
     - docker build -t ui -f Dockerfile.ui .
     - docker build -t server -f Dockerfile.server .
+    - docker build -t e2e -f Dockerfile.e2e .
     - cd nginx-load-balancer
     - docker build -t nginx_load_balancer .
     - cd ..
