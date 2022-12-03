@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/playwright:v1.28.1-focal
-COPY e2e/* ./tests/
+COPY e2e/* ./e2e/
 COPY playwright.config.ts ./
 COPY package*.json ./
 RUN npm i
