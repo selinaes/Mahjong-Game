@@ -1,7 +1,8 @@
-FROM mcr.microsoft.com/playwright:v1.28.0-focal
+FROM mcr.microsoft.com/playwright:v1.28.1-focal
 COPY e2e/* ./tests/
 COPY playwright.config.ts ./
 COPY package*.json ./
+RUN npm install playwright-chromium
 RUN npm i
 ENV APP_URL http://server1:8099
 ENV CI true
