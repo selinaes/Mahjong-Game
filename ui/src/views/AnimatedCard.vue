@@ -5,6 +5,9 @@
     :bg-variant="cardColor(card.locationType)"
     style="max-width: 20rem;"
     class="mb-2"
+    img-alt="Image"
+    img-top
+    img-src="require('../../assets/duke.png')"
   >
     <b-card-text>
       [Card-ID: {{card.id}}] {{card.code}} {{card.locationType}}

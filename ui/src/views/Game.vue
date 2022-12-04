@@ -23,10 +23,21 @@
           </div>
         </b-modal>
 
-        <b-modal id="win-modal" v-model="winShow" hide-footer title="You Won!">
+        <b-modal id="win-modal" v-model="winShow" hide-footer no-stacking title="You Won!">
           <p class="my-2">You won by adding this card to your deck: </p>
           <p>{{winCard}}</p>
           <b-button  @click="$bvModal.hide('win-modal')" >Yay! Close this.</b-button>
+        </b-modal>
+
+        <b-modal id="special-finished-modal" v-model="opsShow" hide-footer no-stacking title="Someone pong/kong/chowed!">
+          <p class="my-2">Card {{opsInfo.card}} is {{opsInfo.action}}ed by user "{{opsInfo.username}}" </p>
+          <b-button  @click="$bvModal.hide('special-finished-modal')" >Ok.</b-button>
+        </b-modal>
+
+        <b-modal id="game-end-modal" v-model="gameEndShow" hide-footer no-stacking title="Game Over">
+          <p class="my-2">Game Over. This player won: </p>
+          <p>{{winUser}}</p>
+          <b-button  @click="$bvModal.hide('game-end-modal')" >Close</b-button>
         </b-modal>
       </div>
 
@@ -90,15 +101,21 @@ const cards: Ref<Card[]> = ref([])
 const currentTurnPlayerIndex = ref(-1)
 const phase = ref("")
 const playCount = ref(-1)
+
 const canPong = ref(false)
 const canKong = ref(false)
 const canChow = ref(false)
 const modalShow = ref(false)
 const choiceShow = ref(false)
 const winShow = ref(false)
+const opsShow = ref(false)
+const gameEndShow = ref(false)
+
 const winCard = ref("")
 const actionableCard = ref("")
 const chowChoices: Ref<Card[][]> = ref([])
+const opsInfo = ref({card: "", action: "", username: ""})
+const winUser = ref("")
 
 const lastPlayed = computed(() => getLastPlayedCards(cards.value))
 
@@ -165,6 +182,16 @@ socket.on("user-can-chow", (chowCardSets: Card[][], lastPlayedCard: Card) => {
   
   canChow.value = true
   modalShow.value = true
+})
+
+socket.on("special-ops", (action: string, card: Card, name: string) => {
+  opsInfo.value = {card: card.rank + card.suit, action, username: name}
+  opsShow.value = true
+})
+
+socket.on("game-over", (name: string) => {
+  winUser.value = name
+  gameEndShow.value = true
 })
 
 function doAction(action: Action) {

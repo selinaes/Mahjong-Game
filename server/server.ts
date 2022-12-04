@@ -122,6 +122,30 @@ function emitUpdatedCardsForSpecialOps(cards: Card[]) {
   })
 }
 
+function emitUpdateCardTaken(action: string, updatedCards: Card[], playerIdx: number) {
+  gameState.playerNames.forEach( (_, i) => {
+    if (i !== playerIdx) {
+      io.to(String(i)).emit(
+        "special-ops",
+        action,
+        updatedCards[0],
+        playerUserIds[playerIdx]
+      )
+    }
+  })
+}
+
+function emitGameOver(winnerId: number) {
+  gameState.playerNames.forEach( (_, i) => {
+    if (i !== winnerId) {
+      io.to(String(i)).emit(
+        "game-over",
+        playerUserIds[winnerId]
+      )
+    }
+  })
+}
+
 io.on('connection', client => {
   const user = (client.request as any).session?.passport?.user
   logger.info("new socket connection for user " + JSON.stringify(user))
@@ -204,6 +228,7 @@ io.on('connection', client => {
       updatedCards = doAction(gameState, { ...action, playerIndex })
       if ((action.action === "chow" || action.action === "kong" || action.action === "pong") && updatedCards.length > 0) {
         emitUpdatedCardsForSpecialOps(updatedCards)
+        emitUpdateCardTaken(action.action, updatedCards, playerIndex)
         updatedCards.splice(0,0) // remove the special 1st place repeated last-played-card
       } else {
         emitUpdatedCardsForPlayers(updatedCards)
@@ -237,6 +262,7 @@ io.on('connection', client => {
           "user-win",
           updatedCards
         )
+        emitGameOver(winUserId)
     } else {
       if (kongUserId !== -1) {
         console.log("user-can-kong, Id"+kongUserId)
