@@ -30,7 +30,7 @@
       </b-row>
       <b-row class="my-1" >
         <b-col sm="4">
-          <label for="sb-num-decks">Enable Test(0: disable, 1: enable): [{{currentConfig.test}}]</label>
+          <label for="sb-num-decks">Enable Test(0: disable, 1: enable, ***enable test is for E2E testing example with fixed dealing cards***): [{{currentConfig.test}}]</label>
         </b-col>
         <b-col sm="5">
           <b-form-input v-model="currentConfig.test" type= "number" min="0" max="1" placeholder="Enter if enable dragon and wind" inline number></b-form-input>

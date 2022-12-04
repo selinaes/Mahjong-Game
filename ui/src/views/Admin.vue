@@ -1,6 +1,10 @@
 <template>
-  <div>
+  <div v-if = "(all_users.length > 0)">
+    <h2>All user information:</h2>
     <b-table :items="all_users" :fields="userfield" />
+  </div>
+  <div v-else>
+    <p> No permission </p>
   </div>
 </template>
 
@@ -10,11 +14,8 @@ import { user } from  "../../../server/setupMongo"
 
 const userfield = ["_id","role","gameCount","winCount"]
 let all_users: Ref<user[]> = ref([])
+
 onMounted(async () => {
   all_users.value = await (await fetch("/api/all-users")).json()
-  console.log(all_users.value)
 })
 </script>
-
-
-<!-- [{"_id":"dennis","role":"admin","gameCount":0,"winCount":0},{"_id":"kate","role":"gamer","gameCount":0,"winCount":0},{"_id":"alice","role":"gamer","gameCount":0,"winCount":0},{"_id":"kevin","role":"gamer","gameCount":0,"winCount":0}] -->
