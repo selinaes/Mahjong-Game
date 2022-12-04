@@ -56,5 +56,4 @@ e2e-test-job:   # This job runs in the test stage.
   script:
     - echo "Running E2E tests..."
     - docker exec 590-final-project-mahjong-e2e-1 xvfb-run npx playwright test
-    - docker cp 590-final-project-mahjong-e2e-1:/test-results ./test-results
     # - docker run -t --rm --ipc=host mcr.microsoft.com/playwright:v1.28.1-focal /bin/bash -c 'npx playwright test --project=chromium'
