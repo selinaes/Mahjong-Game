@@ -52,11 +52,11 @@ services:
   keycloak:
     image: keycloak18
     container_name: keycloak
-    environment:
-      - KEYCLOAK_USER=keycloak
-      # NOTE: this is only for demonstration purposes
-      # ordinarily, you should NOT embed passwords in files
-      - KEYCLOAK_PASSWORD=keycl0ak
+    # environment:
+    #   - KEYCLOAK_USER=keycloak
+    #   # NOTE: this is only for demonstration purposes
+    #   # ordinarily, you should NOT embed passwords in files
+    #   - KEYCLOAK_PASSWORD=keycl0ak
     restart: always
     networks:
       - lecture22

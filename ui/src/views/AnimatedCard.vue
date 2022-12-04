@@ -23,26 +23,29 @@
 
 
 
-<!-- <template>
-  <div class= "grid-container">
-    <b-card>
-      <img :src = "`./public/${card.code}.png`" width = "40"/> 
-      
-      <b-button href="#" :variant= "legal ? 'primary':'secondary'" :disabled="!legal" @click="play()" > {{card.locationType === 'last-card-played'?'Last Played Card':'Play'}}</b-button>
-    </b-card>
+<template>
+  <div @click="play()">
+    <img :src = "`/${card.code}.png`" width = "70" :class="legal ? 'playable': 'not-playable'"/> 
 </div>
-</template> -->
+</template>
+
+<style>
+  .not-playable{
+    filter: grayscale(100%);
+  }
+
+  .playable{
+    filter: grayscale(0%);
+    /* border-radius: 20px;
+    box-shadow: 0px -10px gray; */
+  }
+</style>
 
 
 <script setup lang="ts">
 import { Card, LocationType } from "../../../server/model"
 
-function mahjongimg(code: number){
-  if(code){
-    return require('@/assets/'+code+'.png')
-  }
-}
- 
+
 // props
 interface Props {
   card?: Card

@@ -13,6 +13,7 @@ COPY ui/*.js* ./ui/
 COPY ui/.npmrc ./ui/
 COPY ui/index.html ./ui/
 COPY ui/src ./ui/src
+COPY ui/public ./ui/public
 WORKDIR /home/node/app/ui
 RUN npm i
 RUN ls -al && npm run build

@@ -48,12 +48,12 @@
     
     <router-link :to="{ path: '/config'}"><b-button class="mx-2 my-2" >Config</b-button></router-link>
     <router-link :to="{ path: '/rule'}"><b-button class="mx-2 my-2" >Rule</b-button></router-link>
-    <router-link :to="{ path: '/admin'}"><b-button class="mx-2 my-2" >Admin</b-button></router-link>
+    <router-link :to="{ path: '/admin'}"><b-button class="mx-2 my-2" :disabled="all_users.hasOwnProperty('error')" >Admin Only</b-button></router-link>
 
     <div>
       <b-card no-body class="text-center">
         <div class="bg-secondary text-light">
-        Note: White is card is in hand; Green card is set-aside for chow/pong/gang; Black is unused card; Blue is last played card.
+        Note: Gray Tiles means you cannot play.
        </div>
       </b-card>
     </div>
@@ -72,7 +72,13 @@
           <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
         </div>
       </div>
-      <h4> Played Tiles & Last-played Tile:</h4>
+      <h4>Last-played:</h4>
+      <div>
+        <div v-for="card in cards.filter(card => card.locationType === 'last-card-played')" :key="card.id" class = "test">
+          <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
+        </div>
+      </div>
+      <h4> Played Tiles:</h4>
       <div>
         <div v-for="card in cards.filter(card => card.playerIndex === null)" :key="card.id" class = "test">
           <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
@@ -96,6 +102,7 @@ import { computed, onMounted, ref, Ref } from 'vue'
 import { io } from "socket.io-client"
 import { Card, GamePhase, Action, CardId} from "../../../server/model"
 import AnimatedCard from './AnimatedCard.vue';
+import { user } from  "../../../server/setupMongo"
 
 const socket = io()
 // let x = props.playerIndex
@@ -125,9 +132,14 @@ const opsInfo = ref({card: "", action: "", username: ""})
 const winUser = ref("")
 
 const lastPlayed = computed(() => getLastPlayedCards(cards.value))
+let all_users: Ref<user[]> = ref([])
 
 
 const myTurn = computed(() => (currentTurnPlayerIndex.value === playerIndex.value) && (phase.value !== "game-over"))
+
+onMounted(async () => {
+  all_users.value = await (await fetch("/api/all-users")).json()
+})
 
 socket.on("all-cards", (allCards: Card[]) => {
   cards.value = allCards.sort((a,b)=> {return a.code - b.code})
