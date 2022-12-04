@@ -5,7 +5,7 @@
   <b-overlay :show="busy">
     <b-container fluid>
       <b-row class="my-1" >
-        <b-col sm="4">
+        <b-col sm="5">
           <label for="sb-num-decks">Dealer Position(0-3): [{{currentConfig.dealer}}]</label>
         </b-col>
         <b-col sm="5">
@@ -13,7 +13,7 @@
         </b-col>
       </b-row>
       <b-row class="my-1" >
-        <b-col sm="4">
+        <b-col sm="5">
           <label for="sb-rank-limit">Order of Playing(0: clockwise, 1: counterclockwise): [{{currentConfig.order}}]</label>
         </b-col>
         <b-col sm="5">
@@ -21,7 +21,7 @@
         </b-col>    
       </b-row>
       <b-row class="my-1" >
-        <b-col sm="4">
+        <b-col sm="5">
           <label for="sb-num-decks">Enable Dragon and Wind(0: disable, 1: enable): [{{currentConfig.dragonwind}}]</label>
         </b-col>
         <b-col sm="5">
@@ -29,7 +29,7 @@
         </b-col>
       </b-row>
       <b-row class="my-1" >
-        <b-col sm="4">
+        <b-col sm="5">
           <label for="sb-num-decks">Enable Test(0: disable, 1: enable, ***enable test is for E2E testing example with fixed dealing cards***): [{{currentConfig.test}}]</label>
         </b-col>
         <b-col sm="5">

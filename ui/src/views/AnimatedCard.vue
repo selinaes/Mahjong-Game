@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <div class= "grid-container">
   <b-card
     :title="card.rank+ ' '+ card.suit"
@@ -18,20 +18,21 @@
     </b-button>
   </b-card>
 </div>
-</template>  -->
+</template> 
 
 
 
 
-<template>
+<!-- <template>
   <div class= "grid-container">
-    
+    <img :src = "mahjongimg(card.code)" alt="pic"/> 
     <b-card>
-      <img :src = "(mahjongimg(card.code))" width = "40"/> 
+      <img :src = "require(`./../assets/${card.code}.png`)" width = "40"/> 
+      
       <b-button href="#" :variant= "legal ? 'primary':'secondary'" :disabled="!legal" @click="play()" > {{card.locationType === 'last-card-played'?'Last Played Card':'Play'}}</b-button>
     </b-card>
 </div>
-</template>
+</template> -->
 
 
 <script setup lang="ts">
@@ -39,8 +40,7 @@ import { Card, LocationType } from "../../../server/model"
 
 function mahjongimg(code: number){
   if(code){
-    let output = "./../img/"+code+".png"
-    return output
+    return require('@/assets/'+code+'.png')
   }
 }
  
