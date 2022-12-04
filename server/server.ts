@@ -157,6 +157,7 @@ io.on('connection', client => {
   function emitGameState() {
     client.emit(
       "game-state", 
+      playerUserIds,
       playerIndex,
       gameState.currentTurnPlayerIndex,
       gameState.phase,
@@ -292,6 +293,7 @@ io.on('connection', client => {
     
     io.emit(
       "game-state",
+      playerUserIds,
       null,
       gameState.currentTurnPlayerIndex,
       gameState.phase,

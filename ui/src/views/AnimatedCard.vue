@@ -5,9 +5,6 @@
     :bg-variant="cardColor(card.locationType)"
     style="max-width: 20rem;"
     class="mb-2"
-    img-alt="Image"
-    img-top
-    img-src="require('../../assets/duke.png')"
   >
     <b-card-text>
       [Card-ID: {{card.id}}] {{card.code}} {{card.locationType}}
@@ -28,9 +25,8 @@
 
 <!-- <template>
   <div class= "grid-container">
-    <img :src = "mahjongimg(card.code)" alt="pic"/> 
     <b-card>
-      <img :src = "require(`./../assets/${card.code}.png`)" width = "40"/> 
+      <img :src = "`./public/${card.code}.png`" width = "40"/> 
       
       <b-button href="#" :variant= "legal ? 'primary':'secondary'" :disabled="!legal" @click="play()" > {{card.locationType === 'last-card-played'?'Last Played Card':'Play'}}</b-button>
     </b-card>

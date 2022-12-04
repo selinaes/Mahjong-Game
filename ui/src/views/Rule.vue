@@ -40,5 +40,8 @@
       <li>In the first turn, Dealer discards a tile and does not draw any tile. After this, the players can take turns to draw a tile and discard a tile, or perform melds like pong, kong, or chow. If a meld is performed, the player needs to discard a tile to keep the number of tiles at hand 13. </li>
       <li>The first player who forms a winning hand wins the game.</li>
     </ol>
+    <b-col sm="2">
+          <b-button size="sm" @click="$router.go(-1)" >Go Back</b-button>
+    </b-col>
   </div>
 </template>

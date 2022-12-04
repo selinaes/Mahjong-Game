@@ -1,10 +1,13 @@
 <template>
+  <div>
   <div v-if = "(all_users.length > 0)">
     <h2>All user information:</h2>
     <b-table :items="all_users" :fields="userfield" />
   </div>
   <div v-else>
     <p> No permission </p>
+  </div>
+  <b-button size="sm" @click="$router.go(-1)" >Go Back</b-button>
   </div>
 </template>
 

@@ -42,13 +42,15 @@
       </div>
 
     <b-button class="mx-2 my-2" size="sm" @click="socket.emit('new-game')">New Game</b-button>
-    <b-badge class="mr-2 mb-2" :variant="myTurn ? 'primary' : 'secondary'">turn: {{ currentTurnPlayerIndex }}</b-badge>
+    <b-badge class="mr-2 mb-2" :variant="myTurn ? 'primary' : 'secondary'">turn: {{ playernames[currentTurnPlayerIndex] }}</b-badge>
     <b-badge class="mr-2 mb-2">{{ phase }}</b-badge>
     <b-badge class="mr-4 mb-3">{{"Current # of cards: " + cards.length}}</b-badge>
     
     <router-link :to="{ path: '/config'}"><b-button class="mx-2 my-2" >Config</b-button></router-link>
+    <router-link :to="{ path: '/rule'}"><b-button class="mx-2 my-2" >Rule</b-button></router-link>
+    <router-link :to="{ path: '/admin'}"><b-button class="mx-2 my-2" >Admin</b-button></router-link>
+
     <div>
-      <p>Last Played card: {{JSON.stringify(lastPlayed)}}</p>
       <b-card no-body class="text-center">
         <div class="bg-secondary text-light">
         Note: White is card is in hand; Green card is set-aside for chow/pong/gang; Black is unused card; Blue is last played card.
@@ -70,7 +72,7 @@
           <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
         </div>
       </div>
-      <h4> Played Tiles & Last-played Tile</h4>
+      <h4> Played Tiles & Last-played Tile:</h4>
       <div>
         <div v-for="card in cards.filter(card => card.playerIndex === null)" :key="card.id" class = "test">
           <AnimatedCard :card="card" :legal="isLegal(card, cards)" @play="playCard(card.id)" />
@@ -101,6 +103,7 @@ const socket = io()
 const playerIndex: Ref<number | "all"> = ref("all")
 
 const cards: Ref<Card[]> = ref([])
+const playernames: Ref<string[]> = ref([])
 
 const currentTurnPlayerIndex = ref(-1)
 const phase = ref("")
@@ -134,10 +137,11 @@ socket.on("updated-cards", (updatedCards: Card[]) => {
   applyUpdatedCards(updatedCards)
 })
 
-socket.on("game-state", (newPlayerIndex: number, newCurrentTurnPlayerIndex: number, newPhase: GamePhase, newPlayCount: number) => {
+socket.on("game-state", (playerUserIds: string[], newPlayerIndex: number, newCurrentTurnPlayerIndex: number, newPhase: GamePhase, newPlayCount: number) => {
   if (newPlayerIndex != null) {
     playerIndex.value = newPlayerIndex
   }
+  playernames.value = playerUserIds
   currentTurnPlayerIndex.value = newCurrentTurnPlayerIndex
   phase.value = newPhase
   playCount.value = newPlayCount
