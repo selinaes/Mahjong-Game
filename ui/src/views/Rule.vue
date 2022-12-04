@@ -8,7 +8,6 @@
       <li>Character(万), Rank: 1-9;</li>
       <li>Dragon(箭牌), Rank: Red Dragon, Green Dragon, White Dragon;</li>
       <li>Wind(风牌), Rank: North Wind, South Wind, East Wind, West Wind;</li>
-      <li>Bonus(花牌), Rank: Flower, Season;</li>
     </ul>
     <p>Each Rank has 4 tiles, with a total of 144 tiles.</p>
 
@@ -36,11 +35,10 @@
 
     <h2>Game Flow:</h2>
     <ol>
-      <li>Set configuration: Set the dealer and order of playing(clockwise or counterclockwise) in the configuration page.</li>
+      <li>Set configuration: Set the dealer, order of playing, enable dragon&wind, and disable test mode in the configuration page.</li>
       <li>When a game starts, Dealer gets 14 tiles and other players get 13 tiles.</li>
-      <li>If any player gets a bonus tile, exchange the bonus tile for another tile.</li>
       <li>In the first turn, Dealer discards a tile and does not draw any tile. After this, the players can take turns to draw a tile and discard a tile, or perform melds like pong, kong, or chow. If a meld is performed, the player needs to discard a tile to keep the number of tiles at hand 13. </li>
-      <li>The first player who wins actually wins the game.</li>
+      <li>The first player who forms a winning hand wins the game.</li>
     </ol>
   </div>
 </template>
