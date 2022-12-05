@@ -41,7 +41,7 @@
         </b-modal>
       </div>
 
-    <b-button class="mx-2 my-2" size="sm" @click="socket.emit('new-game')">Start New Game</b-button>
+    <b-button class="mx-2 my-2" size="sm" @click="socket.emit('new-game')"> ok! Start New Game</b-button>
     <b-badge class="mr-2 mb-2" :variant="myTurn ? 'primary' : 'secondary'">turn: {{ playernames[currentTurnPlayerIndex] }}</b-badge>
     <b-badge class="mr-2 mb-2">{{ phase }}</b-badge>
     <b-badge class="mr-4 mb-3">{{"Current # of cards: " + cards.length}}</b-badge>
