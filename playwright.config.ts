@@ -50,7 +50,7 @@ const config: PlaywrightTestConfig = {
         ...devices['Desktop Chrome'],
         headless: false,
         launchOptions: {
-          slowMo: 300,
+          slowMo: 400,
         },
 
     },

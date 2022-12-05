@@ -81,7 +81,7 @@ const wrap = (middleware: any) => (socket: any, next: any) => middleware(socket.
 io.use(wrap(sessionMiddleware))
 
 // hard-coded game configuration
-let currentConfig = createConfig(0,0,0,0)
+let currentConfig = createConfig(0,0,0,1)
 
 export const playerUserIds = ["dennis", "alice", "kevin", "kate"]
 let gameState = createEmptyGame(playerUserIds, currentConfig) //empty game state and wait for new game
