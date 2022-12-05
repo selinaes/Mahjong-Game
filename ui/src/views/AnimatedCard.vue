@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class= "grid-container">
   <b-card
     :title="card.rank+ ' '+ card.suit"
@@ -18,7 +18,7 @@
     </b-button>
   </b-card>
 </div>
-</template> 
+</template>  -->
 
 
 
