@@ -224,9 +224,9 @@ export const testjson = JSON.stringify([
       "playerIndex": null
     },
     {
-      "code": 4, 
+      "code": 3, 
       "suit": "bamboo",
-      "rank": "4",
+      "rank": "3",
       "id": "29",
       "locationType": "unused",
       "playerIndex": null

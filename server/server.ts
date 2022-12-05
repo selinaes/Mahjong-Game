@@ -235,7 +235,7 @@ io.on('connection', client => {
         emitUpdatedCardsForPlayers(updatedCards)
       }
       // console.log("update card is: " + JSON.stringify(updatedCards))
-      if (action.action === "play-card"){
+      if (action.action === "play-card" && updatedCards.length > 0){ // so that failed play will not getUser (no last played card, will server down)
         pongUserId = getPongUser(gameState)
         kongUserId = getKongUser(gameState)
         chowCardSets = getChowCards(gameState)
@@ -258,7 +258,7 @@ io.on('connection', client => {
     )
     if (winUserId !== -1) {
       gameState.phase = "game-over"
-      console.log("user-win, Id: "+winUserId)
+      // console.log("user-win, Id: "+winUserId)
         io.to(winUserId.toString()).emit(
           "user-win",
           updatedCards
@@ -266,14 +266,14 @@ io.on('connection', client => {
         emitGameOver(winUserId)
     } else {
       if (kongUserId !== -1) {
-        console.log("user-can-kong, Id"+kongUserId)
+        // console.log("user-can-kong, Id"+kongUserId)
         io.to(kongUserId.toString()).emit(
           "user-can-kong",
           updatedCards
         )
       }
       else if (pongUserId !== -1) {
-        console.log("user-can-pong, Id"+pongUserId)
+        // console.log("user-can-pong, Id"+pongUserId)
         io.to(pongUserId.toString()).emit(
           "user-can-pong",
           updatedCards

@@ -450,7 +450,7 @@ export function getWinUser(state: GameState){
 
 export function getPongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
-  console.log("getPongUser, lastPlayed is id "+lastPlayedCard.id)
+  // console.log("getPongUser, lastPlayed is id "+lastPlayedCard.id)
   let prevId = -1;
     if(state.config.order === 1){
       prevId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
@@ -474,7 +474,7 @@ export function getPongUser(state: GameState){
 
 export function getKongUser(state: GameState){
   const lastPlayedCard = getLastPlayedCard(state.cardsById)
-  console.log("getKongUser, lastPlayed is id "+lastPlayedCard.id)
+  // console.log("getKongUser, lastPlayed is id "+lastPlayedCard.id)
   let prevId = -1;
     if(state.config.order === 1){
       prevId = (state.currentTurnPlayerIndex + 1) % state.playerNames.length
