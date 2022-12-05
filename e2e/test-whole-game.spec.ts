@@ -69,5 +69,4 @@ test('test', async ({ page, context }) => {
   await page3.getByRole('button', { name: 'Kong' }).click();
   await page3.getByRole('button', { name: 'Draw Card' }).click();
   await page3.locator('div:nth-child(4) > div > .playable').click();
-  await page3.getByText('Close').click();
 });
